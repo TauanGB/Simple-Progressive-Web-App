@@ -2,7 +2,8 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DJANGO_SETTINGS_MODULE=foco_especializado.settings.prod
+    DJANGO_SETTINGS_MODULE=foco_especializado.settings.prod \
+    PYTHONPATH=/app/foco_especializado
 
 WORKDIR /app
 
