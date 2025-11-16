@@ -95,6 +95,23 @@ WSGI_APPLICATION = "foco_especializado.wsgi.application"
 MYSQL_HOST = os.getenv("MYSQL_HOST")
 USE_PYMYSQL = _get_bool_env("USE_PYMYSQL", True)
 
+def _get_env_alias(primary: str, aliases: list[str], default: str | None = None) -> str | None:
+    value = os.getenv(primary)
+    if value:
+        return value
+    for alias in aliases:
+        alias_val = os.getenv(alias)
+        if alias_val:
+            return alias_val
+    return default
+
+# Railway frequentemente usa MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
+MYSQL_HOST = _get_env_alias("MYSQL_HOST", ["MYSQLHOST"])
+MYSQL_PORT = _get_env_alias("MYSQL_PORT", ["MYSQLPORT"], "3306")
+MYSQL_NAME = _get_env_alias("MYSQL_DB", ["MYSQLDATABASE", "MYSQL_DATABASE", "MYSQL_NAME"])
+MYSQL_USER = _get_env_alias("MYSQL_USER", ["MYSQLUSER", "MYSQL_USERNAME"])
+MYSQL_PASSWORD = _get_env_alias("MYSQL_PASSWORD", ["MYSQLPASSWORD", "MYSQL_PWD"])
+
 if MYSQL_HOST:
     if USE_PYMYSQL:
         try:
@@ -108,11 +125,11 @@ if MYSQL_HOST:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("MYSQL_DB", ""),
-            "USER": os.getenv("MYSQL_USER", ""),
-            "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
+            "NAME": MYSQL_NAME or "",
+            "USER": MYSQL_USER or "",
+            "PASSWORD": MYSQL_PASSWORD or "",
             "HOST": MYSQL_HOST,
-            "PORT": os.getenv("MYSQL_PORT", "3306"),
+            "PORT": MYSQL_PORT or "3306",
             "CONN_MAX_AGE": 60,
             "OPTIONS": {
                 "charset": "utf8mb4",
