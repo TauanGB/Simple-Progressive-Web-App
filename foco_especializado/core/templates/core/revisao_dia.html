@@ -1,0 +1,83 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Revisão do Dia - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Revisão do Dia{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">{{ hoje|date:"l, d \\d\\e F"|capfirst }}</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        REVISÃO DO DIA - MOBILE-FIRST
+        ============================================
+        Formulário para revisão rápida do dia,
+        com campos grandes e fáceis de preencher
+        em mobile.
+    -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">Como foi seu dia?</h2>
+            <div class="card-subtitle">
+                Registre o que te atrapalhou ou o que funcionou bem
+            </div>
+        </div>
+        <div class="card-body" style="padding-top: 0;">
+            <form method="post" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="{{ form.motivo_opcao.id_for_label }}" 
+                           style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                        Motivo de não conclusão (se aplicável)
+                    </label>
+                    {{ form.motivo_opcao }}
+                    {% if form.motivo_opcao.errors %}
+                        <p style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.motivo_opcao.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.motivo_nao_conclusao.id_for_label }}" 
+                           style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                        {{ form.motivo_nao_conclusao.label }}
+                    </label>
+                    {{ form.motivo_nao_conclusao }}
+                    {% if form.motivo_nao_conclusao.errors %}
+                        <p style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.motivo_nao_conclusao.errors }}</p>
+                    {% endif %}
+                    <p style="color: #6B7280; font-size: 0.75rem; margin-top: 0.5rem;">
+                        Descreva com mais detalhes, se necessário
+                    </p>
+                </div>
+
+                <div>
+                    <label for="{{ form.comentario_reflexao.id_for_label }}" 
+                           style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                        {{ form.comentario_reflexao.label }}
+                    </label>
+                    {{ form.comentario_reflexao }}
+                    {% if form.comentario_reflexao.errors %}
+                        <p style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.comentario_reflexao.errors }}</p>
+                    {% endif %}
+                    <p style="color: #6B7280; font-size: 0.75rem; margin-top: 0.5rem;">
+                        Como foi o dia? O que funcionou? O que pode melhorar?
+                    </p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Salvar Revisão
+                    </button>
+                    <a href="{% url 'core:home' %}" class="btn btn-secondary btn-block">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

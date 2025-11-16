@@ -1,0 +1,316 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Debug PWA - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Debug PWA{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Informações do PWA</h2>
+        <div class="card-subtitle">Status e validação do Progressive Web App</div>
+    </div>
+    <div class="card-body">
+        <!-- Status do Manifest -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #111827;">
+                📄 Manifest.json
+            </h3>
+            <div style="background: #F3F4F6; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #374151;">
+                    <strong>URL:</strong> <a href="{{ manifest_url }}" target="_blank" style="color: #4F46E5; text-decoration: underline;">{{ manifest_url }}</a>
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #6B7280;">
+                    Clique no link acima para verificar se o manifest está sendo servido corretamente.
+                </p>
+            </div>
+            <div id="manifest-status" style="padding: 0.75rem; border-radius: 8px; background: #DBEAFE; color: #1E40AF; font-size: 0.875rem;">
+                ⏳ Verificando...
+            </div>
+        </div>
+
+        <!-- Status do Service Worker -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #111827;">
+                ⚙️ Service Worker
+            </h3>
+            <div style="background: #F3F4F6; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #374151;">
+                    <strong>URL:</strong> <a href="{{ service_worker_url }}" target="_blank" style="color: #4F46E5; text-decoration: underline;">{{ service_worker_url }}</a>
+                </p>
+            </div>
+            <div id="sw-status" style="padding: 0.75rem; border-radius: 8px; background: #DBEAFE; color: #1E40AF; font-size: 0.875rem;">
+                ⏳ Verificando...
+            </div>
+        </div>
+
+        <!-- Status da Instalação -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #111827;">
+                📱 Instalação PWA
+            </h3>
+            <div id="install-status" style="padding: 0.75rem; border-radius: 8px; background: #DBEAFE; color: #1E40AF; font-size: 0.875rem;">
+                ⏳ Verificando...
+            </div>
+        </div>
+
+        <!-- Informações do Navegador -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #111827;">
+                🌐 Informações do Navegador
+            </h3>
+            <div style="background: #F3F4F6; padding: 1rem; border-radius: 8px;">
+                <div id="browser-info" style="font-size: 0.875rem; color: #374151; line-height: 1.8;">
+                    ⏳ Carregando...
+                </div>
+            </div>
+        </div>
+
+        <!-- Modo Standalone -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #111827;">
+                🖥️ Modo de Exibição
+            </h3>
+            <div id="display-mode" style="padding: 0.75rem; border-radius: 8px; background: #DBEAFE; color: #1E40AF; font-size: 0.875rem;">
+                ⏳ Verificando...
+            </div>
+        </div>
+
+        <!-- Instruções de Validação -->
+        <div class="card" style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 2px solid #818CF8;">
+            <div class="card-header">
+                <h3 class="card-title" style="color: #3730A3;">📋 Como Validar o PWA</h3>
+            </div>
+            <div class="card-body">
+                <h4 style="font-size: 0.9375rem; font-weight: 600; margin: 1rem 0 0.5rem 0; color: #3730A3;">
+                    Chrome/Edge (Desktop):
+                </h4>
+                <ol style="font-size: 0.875rem; color: #4B5563; margin: 0 0 1rem 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Abra as DevTools (F12)</li>
+                    <li>Vá para a aba <strong>"Application"</strong></li>
+                    <li>Verifique <strong>"Manifest"</strong> - todos os campos devem estar corretos</li>
+                    <li>Verifique <strong>"Service Workers"</strong> - deve estar ativo</li>
+                    <li>Procure o ícone de instalação na barra de endereços (canto direito)</li>
+                </ol>
+
+                <h4 style="font-size: 0.9375rem; font-weight: 600; margin: 1rem 0 0.5rem 0; color: #3730A3;">
+                    Android (Chrome):
+                </h4>
+                <ol style="font-size: 0.875rem; color: #4B5563; margin: 0 0 1rem 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Acesse o app via Chrome</li>
+                    <li>Verifique se o banner de instalação aparece</li>
+                    <li>Teste se o app pode ser adicionado à tela inicial</li>
+                    <li>Abra as DevTools (menu → Mais ferramentas → Ferramentas do desenvolvedor)</li>
+                    <li>Verifique o manifest e service worker na aba "Application"</li>
+                </ol>
+
+                <h4 style="font-size: 0.9375rem; font-weight: 600; margin: 1rem 0 0.5rem 0; color: #3730A3;">
+                    ⚠️ Observações para Produção:
+                </h4>
+                <ul style="font-size: 0.875rem; color: #4B5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>O app deve ser servido via <strong>HTTPS</strong> (exceto localhost)</li>
+                    <li>Os ícones devem estar disponíveis nos caminhos especificados no manifest</li>
+                    <li>O service worker deve estar registrado e ativo</li>
+                    <li>O manifest deve ser válido e acessível</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // VERIFICAÇÃO DO MANIFEST
+    // ============================================
+    async function checkManifest() {
+        const manifestUrl = '{{ manifest_url }}';
+        const statusDiv = document.getElementById('manifest-status');
+        
+        try {
+            const response = await fetch(manifestUrl);
+            if (response.ok) {
+                const manifest = await response.json();
+                statusDiv.innerHTML = `
+                    ✅ <strong>Manifest válido e acessível</strong><br>
+                    <small>Nome: ${manifest.name || 'N/A'}<br>
+                    Short Name: ${manifest.short_name || 'N/A'}<br>
+                    Display: ${manifest.display || 'N/A'}<br>
+                    Ícones: ${manifest.icons ? manifest.icons.length : 0}</small>
+                `;
+                statusDiv.style.background = '#D1FAE5';
+                statusDiv.style.color = '#065F46';
+            } else {
+                throw new Error('Manifest não encontrado');
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `❌ <strong>Erro ao carregar manifest:</strong> ${error.message}`;
+            statusDiv.style.background = '#FEE2E2';
+            statusDiv.style.color = '#991B1B';
+        }
+    }
+
+    // ============================================
+    // VERIFICAÇÃO DO SERVICE WORKER
+    // ============================================
+    function checkServiceWorker() {
+        const statusDiv = document.getElementById('sw-status');
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistration().then(function(registration) {
+                if (registration) {
+                    statusDiv.innerHTML = `
+                        ✅ <strong>Service Worker registrado</strong><br>
+                        <small>Scope: ${registration.scope}<br>
+                        Estado: ${registration.active ? 'Ativo' : 'Inativo'}</small>
+                    `;
+                    statusDiv.style.background = '#D1FAE5';
+                    statusDiv.style.color = '#065F46';
+                } else {
+                    statusDiv.innerHTML = '⚠️ <strong>Service Worker não registrado</strong>';
+                    statusDiv.style.background = '#FEF3C7';
+                    statusDiv.style.color = '#92400E';
+                }
+            }).catch(function(error) {
+                statusDiv.innerHTML = `❌ <strong>Erro ao verificar Service Worker:</strong> ${error.message}`;
+                statusDiv.style.background = '#FEE2E2';
+                statusDiv.style.color = '#991B1B';
+            });
+        } else {
+            statusDiv.innerHTML = '❌ <strong>Service Worker não suportado neste navegador</strong>';
+            statusDiv.style.background = '#FEE2E2';
+            statusDiv.style.color = '#991B1B';
+        }
+    }
+
+    // ============================================
+    // VERIFICAÇÃO DA INSTALAÇÃO
+    // ============================================
+    function checkInstallStatus() {
+        const statusDiv = document.getElementById('install-status');
+        let statusHTML = '';
+        
+        // Verifica se está em modo standalone (instalado)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                            window.navigator.standalone === true;
+        
+        if (isStandalone) {
+            statusHTML += '✅ <strong>App está instalado (modo standalone)</strong><br>';
+        } else {
+            statusHTML += 'ℹ️ <strong>App não está instalado (modo navegador)</strong><br>';
+        }
+        
+        // Verifica se há deferredPrompt (antes de instalar)
+        if (window.deferredPrompt !== undefined) {
+            statusHTML += '<small>Evento beforeinstallprompt: Disponível</small>';
+            statusDiv.style.background = '#D1FAE5';
+            statusDiv.style.color = '#065F46';
+        } else {
+            statusHTML += '<small>Evento beforeinstallprompt: Não disponível (pode já estar instalado ou não ser suportado)</small>';
+            if (isStandalone) {
+                statusDiv.style.background = '#D1FAE5';
+                statusDiv.style.color = '#065F46';
+            } else {
+                statusDiv.style.background = '#FEF3C7';
+                statusDiv.style.color = '#92400E';
+            }
+        }
+        
+        statusDiv.innerHTML = statusHTML;
+    }
+
+    // ============================================
+    // INFORMAÇÕES DO NAVEGADOR
+    // ============================================
+    function showBrowserInfo() {
+        const infoDiv = document.getElementById('browser-info');
+        const userAgent = navigator.userAgent;
+        const platform = navigator.platform;
+        const language = navigator.language;
+        const onLine = navigator.onLine;
+        
+        // Detecta navegador
+        let browser = 'Desconhecido';
+        if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+            browser = 'Chrome';
+        } else if (userAgent.includes('Edg')) {
+            browser = 'Edge';
+        } else if (userAgent.includes('Firefox')) {
+            browser = 'Firefox';
+        } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+            browser = 'Safari';
+        }
+        
+        // Detecta dispositivo
+        let device = 'Desktop';
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+            device = 'Mobile';
+        }
+        
+        infoDiv.innerHTML = `
+            <strong>Navegador:</strong> ${browser}<br>
+            <strong>Plataforma:</strong> ${platform}<br>
+            <strong>Idioma:</strong> ${language}<br>
+            <strong>Dispositivo:</strong> ${device}<br>
+            <strong>Online:</strong> ${onLine ? 'Sim' : 'Não'}<br>
+            <strong>User Agent:</strong> <small style="word-break: break-all;">${userAgent}</small>
+        `;
+    }
+
+    // ============================================
+    // MODO DE EXIBIÇÃO
+    // ============================================
+    function checkDisplayMode() {
+        const statusDiv = document.getElementById('display-mode');
+        const standalone = window.matchMedia('(display-mode: standalone)').matches;
+        const fullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+        const minimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+        const browser = window.matchMedia('(display-mode: browser)').matches;
+        
+        let mode = 'browser';
+        if (standalone) mode = 'standalone';
+        else if (fullscreen) mode = 'fullscreen';
+        else if (minimalUI) mode = 'minimal-ui';
+        
+        statusDiv.innerHTML = `
+            <strong>Modo atual:</strong> ${mode}<br>
+            <small>Standalone: ${standalone ? 'Sim' : 'Não'}<br>
+            Fullscreen: ${fullscreen ? 'Sim' : 'Não'}<br>
+            Minimal UI: ${minimalUI ? 'Sim' : 'Não'}<br>
+            Browser: ${browser ? 'Sim' : 'Não'}</small>
+        `;
+        
+        if (standalone) {
+            statusDiv.style.background = '#D1FAE5';
+            statusDiv.style.color = '#065F46';
+        } else {
+            statusDiv.style.background = '#FEF3C7';
+            statusDiv.style.color = '#92400E';
+        }
+    }
+
+    // ============================================
+    // INICIALIZAÇÃO
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        checkManifest();
+        checkServiceWorker();
+        checkInstallStatus();
+        showBrowserInfo();
+        checkDisplayMode();
+        
+        // Atualiza a cada 5 segundos
+        setInterval(function() {
+            checkServiceWorker();
+            checkInstallStatus();
+            checkDisplayMode();
+        }, 5000);
+    });
+</script>
+{% endblock %}
+
+
+
+

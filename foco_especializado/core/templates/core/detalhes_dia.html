@@ -1,0 +1,109 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Detalhes do Dia - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Detalhes do Dia{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">{{ data|date:"l, d \\d\\e F"|capfirst }}</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        DETALHES DO DIA - MOBILE-FIRST
+        ============================================
+        Visualização somente leitura de um dia
+        específico, com tarefas e revisão.
+    -->
+
+    <!-- Card de resumo -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">Resumo do Dia</h2>
+        </div>
+        <div class="card-body">
+            <p style="font-size: 1.125rem; margin-bottom: 1rem;">
+                {{ day_plan.tarefas_concluidas }} de {{ day_plan.total_tarefas }} tarefas concluídas
+            </p>
+            <div class="progress-bar-container">
+                <div class="progress-bar {% if day_plan.percentual_conclusao == 100 %}success{% elif day_plan.percentual_conclusao > 0 %}warning{% endif %}" 
+                     style="width: {{ day_plan.percentual_conclusao }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarefas do dia (somente leitura) -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">Tarefas de Foco</h2>
+        </div>
+        <div class="card-body" style="padding-top: 0;">
+            {% for task in tasks %}
+                <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}" style="margin-bottom: 1rem;">
+                    <div class="task-header">
+                        <span class="task-number">{{ task.ordem }}</span>
+                        <div class="task-content">
+                            <h3 class="task-title">{{ task.titulo }}</h3>
+                            {% if task.descricao %}
+                                <p class="task-description">{{ task.descricao }}</p>
+                            {% endif %}
+                            <div style="margin-top: 0.75rem;">
+                                <span class="badge {% if task.status == 'concluida' %}badge-success{% else %}badge-info{% endif %}">
+                                    {% if task.status == 'concluida' %}
+                                        ✓ Concluída
+                                        {% if task.concluida_em %}
+                                            às {{ task.concluida_em|date:"H:i" }}
+                                        {% endif %}
+                                    {% else %}
+                                        Pendente
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="text-align: center; padding: 2rem 0;">
+                    <p style="color: #6B7280;">Nenhuma tarefa registrada para este dia.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Revisão do dia (se existir) -->
+    {% if day_plan.motivo_nao_conclusao or day_plan.comentario_reflexao %}
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Revisão do Dia</h2>
+            </div>
+            <div class="card-body">
+                {% if day_plan.motivo_nao_conclusao %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                            Motivo de não conclusão:
+                        </h3>
+                        <p style="color: #6B7280; line-height: 1.6;">{{ day_plan.motivo_nao_conclusao }}</p>
+                    </div>
+                {% endif %}
+                {% if day_plan.comentario_reflexao %}
+                    <div>
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                            Reflexão:
+                        </h3>
+                        <p style="color: #6B7280; line-height: 1.6; white-space: pre-wrap;">{{ day_plan.comentario_reflexao }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Botão de voltar -->
+    <div style="margin-top: 1.5rem;">
+        <a href="{% url 'core:historico' %}" class="btn btn-secondary btn-block">
+            ← Voltar ao Histórico
+        </a>
+    </div>
+{% endblock %}
+

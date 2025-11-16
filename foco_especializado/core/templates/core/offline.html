@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Sem conexão | 3 Coisas de Hoje</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 24px;
+            text-align: center;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+        .card-offline {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(248, 250, 252, 0.08);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 360px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(15, 23, 42, 0.45);
+        }
+        .card-offline button {
+            margin-top: 24px;
+            width: 100%;
+            border-radius: 999px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-offline">
+        <h1>Sem conexão</h1>
+        <p>Não se preocupe, suas 3 coisas continuam salvas no seu aparelho.</p>
+        <button class="btn btn-primary" onclick="window.location.reload()">Recarregar</button>
+    </div>
+</body>
+</html>
+

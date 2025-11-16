@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Histórico - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Histórico{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">Últimos 30 dias</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        HISTÓRICO - MOBILE-FIRST
+        ============================================
+        Lista de dias anteriores com tarefas,
+        apresentada em cards fáceis de tocar.
+    -->
+
+    <!-- Card de Streak (se houver) -->
+    {% if streak > 0 %}
+    <div class="streak-card fade-in">
+        <div class="streak-number">🔥 {{ streak }}</div>
+        <div class="streak-label">
+            Streak atual: {{ streak }} dia{{ streak|pluralize }} seguido{{ streak|pluralize }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lista de dias -->
+    {% if day_plans %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for plan in day_plans %}
+                <a href="{% url 'core:detalhes_dia' plan.data|date:'Y-m-d' %}" style="text-decoration: none; color: inherit;">
+                    <div class="card fade-in" style="cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: #111827;">
+                                    {{ plan.data|date:"l, d \\d\\e F"|capfirst }}
+                                </h3>
+                                <p style="font-size: 0.875rem; color: #6B7280; margin: 0;">
+                                    {{ plan.tarefas_concluidas }} de {{ plan.total_tarefas }} tarefas concluídas
+                                </p>
+                                <!-- Barra de progresso compacta -->
+                                <div class="progress-bar-container" style="margin-top: 0.75rem; max-width: 200px;">
+                                    <div class="progress-bar {% if plan.percentual_conclusao == 100 %}success{% elif plan.percentual_conclusao > 0 %}warning{% endif %}" 
+                                         style="width: {{ plan.percentual_conclusao }}%"></div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #4F46E5; margin-bottom: 0.25rem;">
+                                    {{ plan.percentual_conclusao }}%
+                                </div>
+                                <span class="badge {% if plan.percentual_conclusao == 100 %}badge-success{% elif plan.percentual_conclusao > 0 %}badge-warning{% else %}badge-info{% endif %}">
+                                    {% if plan.percentual_conclusao == 100 %}
+                                        Completo
+                                    {% elif plan.percentual_conclusao > 0 %}
+                                        Em progresso
+                                    {% else %}
+                                        Pendente
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Estado vazio -->
+        <div class="card fade-in" style="text-align: center; padding: 3rem 1.5rem;">
+            <p style="color: #6B7280; margin-bottom: 1.5rem; font-size: 1rem;">
+                Você ainda não tem histórico de dias.
+            </p>
+            <a href="{% url 'core:home' %}" class="btn btn-primary">
+                Voltar para Hoje
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}
+

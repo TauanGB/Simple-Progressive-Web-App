@@ -1,0 +1,253 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Hoje - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Hoje{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">{{ hoje|date:"l, d \\d\\e F"|capfirst }}</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        HOME - VISÃO GERAL DO DIA (MOBILE-FIRST)
+        ============================================
+        Esta página reestruturada traz mais contexto
+        ao usuário, com cards informativos e acesso
+        rápido a funcionalidades principais.
+    -->
+
+    {% if day_plan %}
+        <!-- 
+            ============================================
+            CARD DE PROGRESSO DO DIA
+            ============================================
+            Mostra quantas tarefas foram concluídas
+            e uma barra de progresso visual.
+        -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Progresso de Hoje</h2>
+            </div>
+            <div class="card-body">
+                <p style="font-size: 1.125rem; margin-bottom: 1rem;">
+                    Você concluiu <strong>{{ tarefas_concluidas }} de {{ total_tarefas }}</strong> tarefas hoje
+                </p>
+                
+                <!-- Barra de progresso -->
+                <div class="progress-bar-container">
+                    <div class="progress-bar {% if tarefas_concluidas == total_tarefas %}success{% elif tarefas_concluidas > 0 %}warning{% endif %}" 
+                         style="width: {% if total_tarefas > 0 %}{{ day_plan.percentual_conclusao }}{% else %}0{% endif %}%"></div>
+                </div>
+                
+                <!-- Mensagem motivacional condicional -->
+                <p style="margin-top: 1rem; font-size: 0.875rem; color: #6B7280;">
+                    {% if tarefas_concluidas == 0 %}
+                        💪 Vamos começar com algo pequeno?
+                    {% elif tarefas_concluidas < total_tarefas %}
+                        🚀 Você já começou, continue no ritmo!
+                    {% elif tarefas_concluidas == total_tarefas %}
+                        🎉 Mandou bem! Dia completo!
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- 
+            ============================================
+            STREAK / CONSISTÊNCIA
+            ============================================
+            Mostra quantos dias seguidos o usuário
+            concluiu pelo menos 1 tarefa.
+        -->
+        {% if streak > 0 %}
+        <div class="streak-card fade-in">
+            <div class="streak-number">🔥 {{ streak }}</div>
+            <div class="streak-label">
+                Dia{{ streak|pluralize }} seguido{{ streak|pluralize }} com pelo menos 1 tarefa concluída
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 
+            ============================================
+            LISTA DE TAREFAS DE FOCO
+            ============================================
+            Cada tarefa como card individual, fácil
+            de tocar e interagir em mobile.
+        -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Tarefas de Foco</h2>
+                <div class="card-subtitle">Até 3 tarefas importantes por dia</div>
+            </div>
+            <div class="card-body" style="padding-top: 0;">
+                {% for task in tasks %}
+                    <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}">
+                        <div class="task-header">
+                            <span class="task-number">{{ task.ordem }}</span>
+                            <div class="task-content">
+                                <h3 class="task-title">{{ task.titulo }}</h3>
+                                {% if task.descricao %}
+                                    <p class="task-description">{{ task.descricao }}</p>
+                                {% endif %}
+                                {% if task.status == 'concluida' and task.concluida_em %}
+                                    <p class="task-meta">
+                                        ✓ Concluída às {{ task.concluida_em|date:"H:i" }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <form method="post" action="{% url 'core:marcar_tarefa' task.id %}" class="task-action-form" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-{% if task.status == 'concluida' %}secondary{% else %}success{% endif %} btn-sm">
+                                    {% if task.status == 'concluida' %}
+                                        ✓ Concluída
+                                    {% else %}
+                                        Marcar como concluída
+                                    {% endif %}
+                                </button>
+                            </form>
+                            <a href="{% url 'core:editar_tarefa' task.id %}" class="btn btn-secondary btn-sm">
+                                Editar
+                            </a>
+                            <a href="{% url 'core:deletar_tarefa' task.id %}" class="btn btn-danger btn-sm">
+                                Deletar
+                            </a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div style="text-align: center; padding: 2rem 0;">
+                        <p style="color: #6B7280; margin-bottom: 1rem;">Você ainda não tem tarefas para hoje.</p>
+                        <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary">
+                            Criar Tarefas do Dia
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 
+            ============================================
+            AÇÕES RÁPIDAS
+            ============================================
+            Botões de ação rápida para funcionalidades
+            principais do app.
+        -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Ações Rápidas</h2>
+            </div>
+            <div class="card-body" style="padding-top: 0;">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    {% if total_tarefas < 3 %}
+                        <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary btn-block">
+                            ➕ Adicionar Tarefa
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'core:revisao_dia' %}" class="btn btn-primary btn-block" style="background-color: #7C3AED;">
+                        ✍️ Revisar meu dia
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 
+            ============================================
+            ESPAÇO RESERVADO PARA IA (MINI-COACH)
+            ============================================
+            Card preparado para funcionalidade de
+            sugestão de tarefas via IA. Mesmo que o
+            backend ainda use stub, o front está
+            preparado para essa interação.
+        -->
+        <div class="card fade-in" style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 2px solid #818CF8;">
+            <div class="card-body">
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: #3730A3;">
+                    💡 Precisa de ajuda?
+                </h3>
+                <p style="font-size: 0.875rem; color: #4B5563; margin-bottom: 1rem;">
+                    Precisa de ajuda para definir suas tarefas de hoje? Use nossa sugestão inteligente!
+                </p>
+                <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary btn-sm" style="background-color: #6366F1;">
+                    Obter Sugestões
+                </a>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- 
+            ============================================
+            SEM PLANO DO DIA - ESTADO INICIAL
+            ============================================
+            Quando o usuário ainda não criou tarefas
+            para hoje, mostra um card chamativo para
+            começar.
+        -->
+        <div class="card fade-in" style="text-align: center; padding: 3rem 1.5rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">
+                Comece seu dia de foco
+            </h2>
+            <p style="color: #6B7280; margin-bottom: 2rem; font-size: 1rem;">
+                Defina até 3 tarefas importantes para hoje.<br>
+                <strong>Menos é mais!</strong>
+            </p>
+            <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem 2rem;">
+                Criar Tarefas do Dia
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // MELHORAR UX: ATUALIZAR STATUS SEM RECARREGAR
+    // ============================================
+    // Atualiza o status da tarefa via AJAX para
+    // melhor experiência em mobile.
+    document.querySelectorAll('.task-action-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            
+            // Feedback visual
+            button.disabled = true;
+            button.textContent = '...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recarrega para atualizar UI completa (progresso, streak, etc.)
+                    location.reload();
+                } else {
+                    // Fallback: submete normalmente
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    this.submit();
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                // Fallback: submete normalmente
+                button.disabled = false;
+                button.textContent = originalText;
+                this.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}
+

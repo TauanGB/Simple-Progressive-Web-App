@@ -1,0 +1,7 @@
+Django>=5.2.8,<6.0
+mysqlclient>=2.2.0
+PyMySQL>=1.1.0
+django-cors-headers>=4.4.0
+django-environ>=0.11.2
+python-dotenv>=1.0.1
+

@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="{{ PWA_SETTINGS.theme_color }}">
+    <meta name="description" content="App de foco diário para ajudar na organização com poucas tarefas importantes. Ideal para pessoas com TDAH.">
+    
+    <!-- Meta tags PWA para Apple/iOS -->
+    {% if PWA_SETTINGS.enabled %}
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="3 Coisas">
+    {% endif %}
+    
+    <!-- Meta tags PWA para Android/Chrome -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="3 Coisas">
+    
+    <!-- Meta tags gerais PWA -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-TileColor" content="#4F46E5">
+    
+    <title>{% block title %}3 Coisas de Hoje - Foco Diário{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN (mantido para compatibilidade) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CSS Customizado - Estilos de App Mobile -->
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    
+    {% if PWA_SETTINGS.enabled %}
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="{% url 'core:manifest' %}">
+    
+    <!-- Apple Touch Icons (para iOS) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
+    {% endif %}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'icon-192.png' %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% static 'icon-512.png' %}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- 
+        ============================================
+        BANNER DE INSTALAÇÃO PWA (MOBILE-FIRST)
+        ============================================
+        Banner que aparece no topo da página quando
+        o app pode ser instalado. Apenas em dispositivos
+        que suportam PWA.
+    -->
+    {% if PWA_SETTINGS.enabled %}
+    <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+        <div class="pwa-install-banner-content">
+            <div class="pwa-install-banner-text">
+                <strong>📱 Instale o app</strong>
+                <span>Adicione à tela inicial para acesso rápido e uso offline</span>
+            </div>
+            <button id="pwa-install-button" class="btn btn-primary btn-sm" style="display: none;">
+                Instalar Agora
+            </button>
+        </div>
+    </div>
+    <div id="ios-install-hint" class="ios-install-hint" hidden>
+        <span class="hint-text">Compartilhar → Adicionar à Tela de Início</span>
+        <div class="hint-actions">
+            <button id="ios-install-button" class="btn btn-secondary btn-xs">Instalar no iPhone</button>
+            <button id="ios-hint-dismiss" class="hint-dismiss" aria-label="Fechar">✕</button>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 
+        ============================================
+        HEADER SIMPLES (MOBILE-FIRST)
+        ============================================
+        Header fixo no topo com título da página.
+        Em mobile, mantém-se simples e limpo.
+    -->
+    {% if user.is_authenticated %}
+    <header class="app-header">
+        <h1>{% block header_title %}Hoje{% endblock %}</h1>
+        {% block header_subtitle %}{% endblock %}
+    </header>
+    {% endif %}
+
+    <!-- 
+        ============================================
+        MENSAGENS (ALERTAS)
+        ============================================
+        Mensagens de sucesso/erro do Django.
+    -->
+    {% if messages %}
+        <div class="app-main">
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- 
+        ============================================
+        CONTEÚDO PRINCIPAL
+        ============================================
+        Área principal do app, com padding adequado
+        para não ficar atrás da navegação inferior.
+    -->
+    <main class="app-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 
+        ============================================
+        NAVEGAÇÃO INFERIOR FIXA (MOBILE-FIRST)
+        ============================================
+        Navegação tipo app mobile, fixa na parte inferior.
+        Em mobile, fica sempre visível. Em desktop, pode
+        ser adaptada para navegação superior ou lateral.
+        
+        Esta navegação dá a sensação de "aplicativo"
+        ao invés de "site genérico".
+    -->
+    {% if user.is_authenticated %}
+    <nav class="app-nav-bottom">
+        <a href="{% url 'core:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <span class="nav-icon">📅</span>
+            <span>Hoje</span>
+        </a>
+        <a href="{% url 'core:historico' %}" class="{% if request.resolver_match.url_name == 'historico' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
+            <span class="nav-icon">📊</span>
+            <span>Histórico</span>
+        </a>
+        <a href="{% url 'core:revisao_dia' %}" class="{% if request.resolver_match.url_name == 'revisao_dia' %}active{% endif %}">
+            <span class="nav-icon">✍️</span>
+            <span>Revisão</span>
+        </a>
+        <a href="{% url 'core:sobre' %}" class="{% if request.resolver_match.url_name == 'sobre' %}active{% endif %}">
+            <span class="nav-icon">ℹ️</span>
+            <span>Sobre</span>
+        </a>
+    </nav>
+    {% endif %}
+
+    <!-- 
+        ============================================
+        SERVICE WORKER REGISTRATION (PWA)
+        ============================================
+        Registra o service worker para funcionalidades
+        offline e melhor experiência como PWA.
+        
+        ⚠️ PRODUÇÃO: Em ambiente de produção, é ESSENCIAL
+        servir o app via HTTPS para que o service worker
+        funcione corretamente.
+    -->
+    {% if PWA_SETTINGS.enabled %}
+    {{ PWA_SETTINGS|json_script:"pwa-settings-data" }}
+    <script>
+        window.__PWA_SETTINGS = JSON.parse(document.getElementById('pwa-settings-data').textContent);
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('{% url "core:service_worker" %}')
+                    .then(function(registration) {
+                        console.log('[Service Worker] Registrado com sucesso:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.error('[Service Worker] Falha ao registrar:', error);
+                    });
+            });
+        }
+    </script>
+    <script src="{% static 'js/pwa-install.js' %}" defer></script>
+    {% endif %}
+
+    <script>
+        // Melhorar UX: prevenir zoom em double-tap em mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
