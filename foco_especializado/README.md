@@ -2,6 +2,32 @@
 
 App Django de apoio para organização diária com foco em poucas tarefas importantes, desenvolvido especialmente para pessoas com TDAH ou dificuldades de atenção.
 
+## ⚙️ Deploy & ENV (DEV/PROD/Railway)
+
+### Variáveis (.env)
+Use `env.example` na raiz como base.
+
+### DEV (SQLite automático)
+```bash
+cd foco_especializado
+export DJANGO_SETTINGS_MODULE=foco_especializado.settings.dev
+python manage.py runserver
+```
+
+### PROD local (Docker)
+```bash
+docker build -t sistemaeg3 .
+docker run -p 8000:8000 --env-file ./env.example sistemaeg3
+```
+
+### Railway
+- Deploy por repo (Dockerfile detectado)
+- Defina ENV obrigatórias:
+  - `DJANGO_SETTINGS_MODULE=foco_especializado.settings.prod`
+  - `SECRET_KEY`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `CORS_ALLOWED_ORIGINS`
+  - MySQL: `MYSQL_HOST`, `MYSQL_PORT=3306`, `MYSQL_DB`, `MYSQL_USER`, `MYSQL_PASSWORD`, `USE_PYMYSQL=1`
+- Health path: `/healthz`
+
 ## 📋 Sobre o Projeto
 
 Este é um MVP (Minimum Viable Product) de um aplicativo web focado em ajudar pessoas a organizar o dia com poucas tarefas importantes (até 3 por dia). O app trabalha com princípios de externalização de funções executivas, transformando intenções vagas em ações claras e acionáveis.
@@ -49,23 +75,6 @@ Este é um MVP (Minimum Viable Product) de um aplicativo web focado em ajudar pe
    pip install -r requirements.txt
    ```
 
-5. **Crie um arquivo `.env` (opcional em DEV):**
-   - Copie `ENV_EXAMPLE.txt` para `.env` e ajuste se necessário.
-   - Em DEV, se você não preencher variáveis de MySQL, o SQLite será usado automaticamente.
-
-6. **Executar em DEV (com settings de dev):**
-   ```bash
-   set DJANGO_SETTINGS_MODULE=rastreio_logistico.settings.dev
-   python manage.py migrate
-   python manage.py runserver
-   ```
-   - Alternativa Linux/Mac:
-   ```bash
-   export DJANGO_SETTINGS_MODULE=rastreio_logistico.settings.dev
-   python manage.py migrate
-   python manage.py runserver
-   ```
-
 5. **Execute as migrações do banco de dados:**
    ```bash
    python manage.py makemigrations
@@ -86,29 +95,6 @@ Este é um MVP (Minimum Viable Product) de um aplicativo web focado em ajudar pe
 8. **Acesse o app no navegador:**
    - App principal: http://127.0.0.1:8000/
    - Admin Django: http://127.0.0.1:8000/admin/
-    - Healthcheck: http://127.0.0.1:8000/healthz/
-
-## 🏗️ Deploy de Testes/Produção (MySQL + ENV)
-
-1. Defina as variáveis de ambiente de produção:
-   - `DJANGO_SETTINGS_MODULE=rastreio_logistico.settings.prod`
-   - `SECRET_KEY=<sua-chave-secreta>`
-   - `ALLOWED_HOSTS=<seus-hosts>`
-   - `CSRF_TRUSTED_ORIGINS=<origens-csrf>`
-   - `CORS_ALLOWED_ORIGINS=<origens-cors>`
-   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DB`, `MYSQL_USER`, `MYSQL_PASSWORD`
-   - Opcional: `USE_PYMYSQL=1` (se preferir PyMySQL ao invés de mysqlclient)
-
-2. Comandos úteis (deploy):
-   ```bash
-   python manage.py check --deploy
-   python manage.py migrate
-   python manage.py collectstatic --noinput
-   ```
-
-3. Em produção, os caminhos de estáticos/mídia são:
-   - `STATIC_ROOT=/app/staticfiles`
-   - `MEDIA_ROOT=/app/media`
 
 ## 📁 Estrutura do Projeto
 
@@ -136,12 +122,6 @@ foco_especializado/
 │   ├── settings.py                 # Configurações Django
 │   ├── urls.py                     # URLs principais
 │   └── ...
-├── rastreio_logistico/            # Novo pacote de settings (DEV/PROD)
-│   └── settings/
-│       ├── __init__.py            # Exporta dev por padrão
-│       ├── base.py                # Base com ENV + fallback SQLite
-│       ├── dev.py                 # Carrega .env, libera CORS/CSRF localhost
-│       └── prod.py                # MySQL/estáticos/proxy/segurança
 ├── manage.py                       # Script de gerenciamento Django
 ├── requirements.txt                # Dependências Python
 └── README.md                       # Este arquivo
@@ -220,8 +200,6 @@ foco_especializado/
 1. **Autenticação**: O app usa o sistema de usuários padrão do Django. Cada usuário tem seus próprios planos e tarefas.
 
 2. **Banco de Dados**: Por padrão, usa SQLite (desenvolvimento). Para produção, configure PostgreSQL ou MySQL.
-   - Fallback automático para SQLite se `MYSQL_HOST` não estiver definido.
-   - MySQL usa `utf8mb4` e `STRICT_TRANS_TABLES`.
 
 3. **PWA**: Os arquivos PWA estão implementados como esqueleto. Para funcionalidade completa offline, será necessário expandir o service worker.
 

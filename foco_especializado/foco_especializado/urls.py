@@ -11,10 +11,10 @@ from core.views import healthz
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+    path('healthz/', healthz, name='healthz'),
     # URLs de autenticação (usando as do Django)
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('healthz/', healthz, name='healthz'),
 ]
 
 # Serve arquivos estáticos em desenvolvimento

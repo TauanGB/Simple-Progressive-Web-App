@@ -459,5 +459,4 @@ def pwa_debug(request):
 
 
 def healthz(request):
-    """Healthcheck simples."""
     return JsonResponse({"status": "ok"})
