@@ -18,7 +18,7 @@ const STATIC_CACHE_URLS = [
   '/static/css/app.css',
   '/static/js/pwa-install.js',
   '/static/icon-192.png',
-  '/static/icon-384.png',
+  '/static/icon-512.png',
   '/static/icon-512.png',
   '/static/icons/apple-touch-icon.png',
   '/static/manifest.json',
