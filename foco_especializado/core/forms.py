@@ -10,7 +10,7 @@ class TaskForm(forms.ModelForm):
     
     class Meta:
         model = Task
-        fields = ['titulo', 'descricao']
+        fields = ['titulo', 'descricao', 'total_steps']
         widgets = {
             'titulo': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -22,16 +22,26 @@ class TaskForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Descrição opcional da tarefa...',
             }),
+            'total_steps': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex.: 3 (deixe vazio para modo flexível)',
+                'min': 1,
+            }),
         }
         labels = {
             'titulo': 'Título da Tarefa',
             'descricao': 'Descrição (opcional)',
+            'total_steps': 'Total de Etapas (opcional)',
+        }
+        help_texts = {
+            'total_steps': 'Defina quantas etapas a tarefa tem. Deixe vazio para modo flexível (sem limite de etapas).',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['titulo'].required = True
         self.fields['descricao'].required = False
+        self.fields['total_steps'].required = False
 
 
 class DayPlanForm(forms.ModelForm):

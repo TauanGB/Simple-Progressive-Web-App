@@ -85,14 +85,34 @@
             </div>
             <div class="card-body" style="padding-top: 0;">
                 {% for task in tasks %}
-                    <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}">
+                    <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}" data-task-id="{{ task.id }}">
                         <div class="task-header">
                             <span class="task-number">{{ task.ordem }}</span>
-                            <div class="task-content">
+                            <div class="task-content" style="flex: 1;">
                                 <h3 class="task-title">{{ task.titulo }}</h3>
                                 {% if task.descricao %}
                                     <p class="task-description">{{ task.descricao }}</p>
                                 {% endif %}
+                                
+                                <!-- Barra de progresso da tarefa -->
+                                <div style="margin-top: 0.75rem; margin-bottom: 0.75rem;">
+                                    <div class="progress-bar-container" style="margin-bottom: 0.5rem;">
+                                        <div class="progress-bar {% if task.progress_percent == 100 %}success{% elif task.progress_percent > 0 %}warning{% endif %}" 
+                                             style="width: {{ task.progress_percent }}%" 
+                                             data-progress="{{ task.progress_percent }}"></div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #6B7280;">
+                                        <span class="task-progress-text">
+                                            {% if task.total_steps and task.total_steps > 0 %}
+                                                Etapas: {{ task.completed_steps }}/{{ task.total_steps }}
+                                            {% else %}
+                                                Avanço livre
+                                            {% endif %}
+                                        </span>
+                                        <span class="task-progress-percent">{{ task.progress_percent }}%</span>
+                                    </div>
+                                </div>
+                                
                                 {% if task.status == 'concluida' and task.concluida_em %}
                                     <p class="task-meta">
                                         ✓ Concluída às {{ task.concluida_em|date:"H:i" }}
@@ -100,23 +120,35 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="task-actions">
-                            <form method="post" action="{% url 'core:marcar_tarefa' task.id %}" class="task-action-form" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-{% if task.status == 'concluida' %}secondary{% else %}success{% endif %} btn-sm">
-                                    {% if task.status == 'concluida' %}
-                                        ✓ Concluída
-                                    {% else %}
-                                        Marcar como concluída
-                                    {% endif %}
-                                </button>
-                            </form>
-                            <a href="{% url 'core:editar_tarefa' task.id %}" class="btn btn-secondary btn-sm">
-                                Editar
-                            </a>
-                            <a href="{% url 'core:deletar_tarefa' task.id %}" class="btn btn-danger btn-sm">
-                                Deletar
-                            </a>
+                        <div class="task-actions" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                            <!-- Botões A e B -->
+                            <div style="display: flex; gap: 0.5rem;">
+                                <form method="post" action="{% url 'core:avancar_etapa' task.id %}" class="task-advance-form" style="flex: 1;">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="btn btn-primary btn-sm btn-block" 
+                                            {% if task.status == 'concluida' %}disabled{% endif %}>
+                                        ➕ Avançar Etapa
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'core:concluir_tarefa' task.id %}" class="task-complete-form" style="flex: 1;">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="btn btn-success btn-sm btn-block"
+                                            {% if task.status == 'concluida' %}disabled{% endif %}>
+                                        ✓ Concluir
+                                    </button>
+                                </form>
+                            </div>
+                            <!-- Botões secundários -->
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{% url 'core:editar_tarefa' task.id %}" class="btn btn-secondary btn-sm" style="flex: 1;">
+                                    Editar
+                                </a>
+                                <a href="{% url 'core:deletar_tarefa' task.id %}" class="btn btn-danger btn-sm" style="flex: 1;">
+                                    Deletar
+                                </a>
+                            </div>
                         </div>
                     </div>
                 {% empty %}
@@ -205,10 +237,153 @@
 {% block extra_js %}
 <script>
     // ============================================
-    // MELHORAR UX: ATUALIZAR STATUS SEM RECARREGAR
+    // ATUALIZAR PROGRESSO SEM RECARREGAR
     // ============================================
-    // Atualiza o status da tarefa via AJAX para
+    // Atualiza o progresso da tarefa via AJAX para
     // melhor experiência em mobile.
+    
+    function atualizarProgressoTarefa(taskCard, data) {
+        // Atualiza barra de progresso
+        const progressBar = taskCard.querySelector('.progress-bar');
+        const progressPercent = taskCard.querySelector('.task-progress-percent');
+        const progressText = taskCard.querySelector('.task-progress-text');
+        
+        if (progressBar && data.progress_percent !== undefined) {
+            progressBar.style.width = data.progress_percent + '%';
+            progressBar.setAttribute('data-progress', data.progress_percent);
+            
+            // Atualiza classes CSS
+            progressBar.classList.remove('success', 'warning');
+            if (data.progress_percent == 100) {
+                progressBar.classList.add('success');
+            } else if (data.progress_percent > 0) {
+                progressBar.classList.add('warning');
+            }
+        }
+        
+        if (progressPercent && data.progress_percent !== undefined) {
+            progressPercent.textContent = data.progress_percent + '%';
+        }
+        
+        if (progressText && data.completed_steps !== undefined && data.total_steps !== undefined) {
+            if (data.total_steps > 0) {
+                progressText.textContent = 'Etapas: ' + data.completed_steps + '/' + data.total_steps;
+            } else {
+                progressText.textContent = 'Avanço livre';
+            }
+        }
+        
+        // Se a tarefa foi concluída, desabilita botões
+        if (data.status === 'concluida') {
+            const buttons = taskCard.querySelectorAll('button[type="submit"]');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+            });
+            taskCard.classList.add('completed');
+        }
+        
+        // Atualiza contadores do dia (se disponível)
+        if (data.tarefas_concluidas !== undefined && data.total_tarefas !== undefined) {
+            // Pode atualizar o card de progresso do dia se necessário
+            // Por enquanto, vamos recarregar apenas o card de progresso do dia
+            const progressCard = document.querySelector('.card:has(.card-title:contains("Progresso de Hoje"))');
+            if (progressCard) {
+                // Recarrega apenas o card de progresso ou toda a página
+                // Por simplicidade, vamos recarregar a página após um pequeno delay
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            }
+        }
+    }
+    
+    // Handler para botão "Avançar Etapa"
+    document.querySelectorAll('.task-advance-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            const taskCard = this.closest('.task-card');
+            
+            // Feedback visual
+            button.disabled = true;
+            button.textContent = '...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    atualizarProgressoTarefa(taskCard, data);
+                    // Recarrega após um pequeno delay para atualizar contadores do dia
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert(data.error || 'Erro ao avançar etapa');
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao avançar etapa. Tente novamente.');
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        });
+    });
+    
+    // Handler para botão "Concluir Tarefa"
+    document.querySelectorAll('.task-complete-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            const taskCard = this.closest('.task-card');
+            
+            // Feedback visual
+            button.disabled = true;
+            button.textContent = '...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    atualizarProgressoTarefa(taskCard, data);
+                    // Recarrega após um pequeno delay para atualizar contadores do dia
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert(data.error || 'Erro ao concluir tarefa');
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao concluir tarefa. Tente novamente.');
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        });
+    });
+    
+    // Handler legado para marcar_tarefa (mantido para compatibilidade)
     document.querySelectorAll('.task-action-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();

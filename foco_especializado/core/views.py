@@ -162,6 +162,79 @@ def marcar_tarefa(request, task_id):
 
 
 @login_required
+@require_http_methods(["POST"])
+def avancar_etapa(request, task_id):
+    """
+    Avança uma etapa na tarefa (botão A).
+    
+    Retorna JSON para requisições AJAX.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    if task.status == 'concluida':
+        return JsonResponse({
+            'success': False,
+            'error': 'Tarefa já está concluída'
+        }, status=400)
+    
+    sucesso = task.avancar_etapa()
+    
+    if not sucesso:
+        return JsonResponse({
+            'success': False,
+            'error': 'Não foi possível avançar a etapa'
+        }, status=400)
+    
+    day_plan = task.day_plan
+    day_plan.refresh_from_db()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'progress_percent': task.progress_percent,
+            'completed_steps': task.completed_steps,
+            'total_steps': task.total_steps,
+            'pseudo_steps_done': task.pseudo_steps_done,
+            'status': task.status,
+            'tarefas_concluidas': day_plan.tarefas_concluidas,
+            'total_tarefas': day_plan.total_tarefas,
+        })
+    
+    messages.success(request, 'Etapa avançada!')
+    return redirect('core:home')
+
+
+@login_required
+@require_http_methods(["POST"])
+def concluir_tarefa(request, task_id):
+    """
+    Conclui uma tarefa (botão B).
+    
+    Retorna JSON para requisições AJAX.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    task.concluir_tarefa()
+    
+    day_plan = task.day_plan
+    day_plan.refresh_from_db()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'progress_percent': task.progress_percent,
+            'completed_steps': task.completed_steps,
+            'total_steps': task.total_steps,
+            'status': task.status,
+            'tarefas_concluidas': day_plan.tarefas_concluidas,
+            'total_tarefas': day_plan.total_tarefas,
+        })
+    
+    messages.success(request, 'Tarefa concluída!')
+    return redirect('core:home')
+
+
+@login_required
 def deletar_tarefa(request, task_id):
     """Deleta uma tarefa."""
     task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
@@ -271,6 +344,15 @@ def historico(request):
         streak = day_plan_hoje.get_streak()
     except DayPlan.DoesNotExist:
         streak = 0
+    
+    # Adicionar informações de progresso médio para cada plano
+    for plan in day_plans:
+        tasks = plan.tasks.all()
+        if tasks.exists():
+            total_progress = sum(task.progress_percent for task in tasks)
+            plan.progresso_medio = int(total_progress / tasks.count())
+        else:
+            plan.progresso_medio = 0
     
     context = {
         'day_plans': day_plans,

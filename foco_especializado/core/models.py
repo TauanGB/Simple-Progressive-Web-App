@@ -157,6 +157,32 @@ class Task(models.Model):
         null=True,
         verbose_name='Concluída em'
     )
+    # Campos para progresso por etapas
+    total_steps = models.IntegerField(
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1)],
+        verbose_name='Total de Etapas',
+        help_text='Quantidade total de etapas definidas (deixe vazio para modo flexível)'
+    )
+    completed_steps = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Etapas Concluídas',
+        help_text='Quantidade de etapas concluídas (para tarefas com total_steps definido)'
+    )
+    pseudo_steps_done = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Passos Avançados',
+        help_text='Contador de cliques em "Avançar etapa" (para tarefas sem total_steps)'
+    )
+    progress_percent = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name='Progresso (%)',
+        help_text='Progresso atual da tarefa em percentual (0-100)'
+    )
     criado_em = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Criado em'
@@ -175,17 +201,101 @@ class Task(models.Model):
 
     def __str__(self):
         return f"{self.ordem}. {self.titulo} - {self.day_plan.data}"
+    
+    def save(self, *args, **kwargs):
+        """Sobrescreve save para calcular progresso automaticamente."""
+        # Se o progresso não foi definido ou se a tarefa não está concluída, recalcula
+        if self.status != 'concluida':
+            self.progress_percent = self.calcular_progresso()
+        elif self.status == 'concluida':
+            self.progress_percent = 100
+        super().save(*args, **kwargs)
 
-    def marcar_como_concluida(self):
-        """Marca a tarefa como concluída e registra o horário."""
+    def calcular_progresso(self):
+        """
+        Calcula o progresso da tarefa baseado no modo (com ou sem total_steps).
+        
+        MODO 1 - Com total_steps definido:
+            progresso = (completed_steps / total_steps) * 100
+        
+        MODO 2 - Sem total_steps (flexível):
+            progresso = (pseudo_steps_done / (pseudo_steps_done + 1)) * 100
+        """
+        if self.status == 'concluida':
+            return 100
+        
+        if self.total_steps and self.total_steps > 0:
+            # MODO 1: Etapas definidas
+            if self.total_steps == 0:
+                return 0
+            progresso = int((self.completed_steps / self.total_steps) * 100)
+            return min(100, max(0, progresso))
+        else:
+            # MODO 2: Etapas flexíveis
+            if self.pseudo_steps_done == 0:
+                return 0
+            progresso = int((self.pseudo_steps_done / (self.pseudo_steps_done + 1)) * 100)
+            return min(99, max(0, progresso))  # Nunca chega a 100% sem concluir
+    
+    def avancar_etapa(self):
+        """
+        Avança uma etapa na tarefa (botão A).
+        
+        Se a tarefa estiver concluída, não faz nada.
+        Se tiver total_steps definido, incrementa completed_steps.
+        Se não tiver total_steps, incrementa pseudo_steps_done.
+        """
+        if self.status == 'concluida':
+            return False  # Não avança se já está concluída
+        
+        if self.total_steps and self.total_steps > 0:
+            # MODO 1: Etapas definidas
+            if self.completed_steps < self.total_steps:
+                self.completed_steps += 1
+                self.progress_percent = self.calcular_progresso()
+                self.save()
+                return True
+        else:
+            # MODO 2: Etapas flexíveis
+            self.pseudo_steps_done += 1
+            self.progress_percent = self.calcular_progresso()
+            self.save()
+            return True
+        
+        return False
+    
+    def concluir_tarefa(self):
+        """
+        Conclui a tarefa (botão B).
+        
+        Marca como concluída, define progresso para 100% e ajusta os contadores.
+        """
         self.status = 'concluida'
+        self.progress_percent = 100
+        
+        if self.total_steps and self.total_steps > 0:
+            # Garante que completed_steps = total_steps
+            self.completed_steps = self.total_steps
+        
         if not self.concluida_em:
             self.concluida_em = timezone.now()
+        
         self.save()
+        return True
+
+    def marcar_como_concluida(self):
+        """
+        Método legado - mantido para compatibilidade.
+        Usa o novo método concluir_tarefa().
+        """
+        return self.concluir_tarefa()
 
     def marcar_como_pendente(self):
         """Marca a tarefa como pendente."""
         self.status = 'pendente'
         self.concluida_em = None
+        # Mantém o progresso atual, mas recalcula se necessário
+        if self.progress_percent >= 100:
+            self.progress_percent = self.calcular_progresso()
         self.save()
 

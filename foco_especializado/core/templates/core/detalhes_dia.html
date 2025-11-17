@@ -44,11 +44,30 @@
                 <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}" style="margin-bottom: 1rem;">
                     <div class="task-header">
                         <span class="task-number">{{ task.ordem }}</span>
-                        <div class="task-content">
+                        <div class="task-content" style="flex: 1;">
                             <h3 class="task-title">{{ task.titulo }}</h3>
                             {% if task.descricao %}
                                 <p class="task-description">{{ task.descricao }}</p>
                             {% endif %}
+                            
+                            <!-- Barra de progresso da tarefa -->
+                            <div style="margin-top: 0.75rem; margin-bottom: 0.75rem;">
+                                <div class="progress-bar-container" style="margin-bottom: 0.5rem;">
+                                    <div class="progress-bar {% if task.progress_percent == 100 %}success{% elif task.progress_percent > 0 %}warning{% endif %}" 
+                                         style="width: {{ task.progress_percent }}%"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #6B7280;">
+                                    <span>
+                                        {% if task.total_steps and task.total_steps > 0 %}
+                                            Etapas: {{ task.completed_steps }}/{{ task.total_steps }}
+                                        {% else %}
+                                            Avanço livre
+                                        {% endif %}
+                                    </span>
+                                    <span>{{ task.progress_percent }}%</span>
+                                </div>
+                            </div>
+                            
                             <div style="margin-top: 0.75rem;">
                                 <span class="badge {% if task.status == 'concluida' %}badge-success{% else %}badge-info{% endif %}">
                                     {% if task.status == 'concluida' %}

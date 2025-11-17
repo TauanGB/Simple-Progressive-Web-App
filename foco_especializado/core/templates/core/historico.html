@@ -42,6 +42,11 @@
                                 <p style="font-size: 0.875rem; color: #6B7280; margin: 0;">
                                     {{ plan.tarefas_concluidas }} de {{ plan.total_tarefas }} tarefas concluídas
                                 </p>
+                                {% if plan.progresso_medio is not None %}
+                                <p style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.25rem; margin-bottom: 0;">
+                                    Progresso médio: {{ plan.progresso_medio }}%
+                                </p>
+                                {% endif %}
                                 <!-- Barra de progresso compacta -->
                                 <div class="progress-bar-container" style="margin-top: 0.75rem; max-width: 200px;">
                                     <div class="progress-bar {% if plan.percentual_conclusao == 100 %}success{% elif plan.percentual_conclusao > 0 %}warning{% endif %}" 
