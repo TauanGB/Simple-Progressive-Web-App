@@ -14,6 +14,7 @@ from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.conf import settings
+from django import forms
 
 from .models import DayPlan, Task
 from .ai_service import sugerir_tarefas_por_ia
@@ -63,6 +64,9 @@ def criar_plano_dia(request):
     3. Pergunta se quer adicionar terceira
     
     Agora permite programar tarefas para dias específicos.
+    
+    NOTA: Esta view está sendo mantida para compatibilidade, mas o fluxo principal
+    agora usa criar_tarefa_hoje() e criar_tarefa_amanha().
     """
     hoje = timezone.now().date()
     
@@ -126,6 +130,142 @@ def criar_plano_dia(request):
         'hoje': hoje,
     }
     return render(request, 'core/criar_plano_dia.html', context)
+
+
+@login_required
+def criar_tarefa_hoje(request):
+    """
+    Página para criar tarefa para hoje, com opção de agendar para outro dia via switch.
+    
+    Quando o switch "agendar para outro dia" está desativado:
+    - Cria tarefa sempre para hoje
+    - Não mostra campo de data
+    
+    Quando o switch está ativado:
+    - Mostra campo de seleção de data
+    - Permite escolher qualquer data (padrão: amanhã)
+    """
+    hoje = timezone.now().date()
+    from datetime import timedelta
+    
+    # Verifica se já existe plano para hoje
+    day_plan, created = DayPlan.objects.get_or_create(
+        usuario=request.user,
+        data=hoje
+    )
+    
+    # Se já tem 3 tarefas, redireciona para home
+    if day_plan.tasks.count() >= 3:
+        messages.info(request, 'Você já tem 3 tarefas para hoje. Use a opção de agendar para criar tarefas em outros dias.')
+        return redirect('core:home')
+    
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        agendar_outro_dia = request.POST.get('agendar_outro_dia', 'off') == 'on'
+        
+        if form.is_valid():
+            # Determinar a data de destino
+            if agendar_outro_dia:
+                # Se o switch estiver ativado, usar a data escolhida (ou amanhã como padrão)
+                data_escolhida = form.cleaned_data.get('data_da_tarefa') or (hoje + timedelta(days=1))
+            else:
+                # Se o switch estiver desativado, sempre usar hoje
+                data_escolhida = hoje
+            
+            # Obter ou criar DayPlan para a data escolhida
+            day_plan_destino, _ = obter_ou_criar_day_plan(
+                request.user,
+                data_escolhida
+            )
+            
+            # Verificar se o DayPlan de destino já tem 3 tarefas
+            if day_plan_destino.tasks.count() >= 3:
+                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia.')
+                context = {
+                    'form': form,
+                    'day_plan': day_plan,
+                    'hoje': hoje,
+                    'agendar_outro_dia': agendar_outro_dia,
+                }
+                return render(request, 'core/criar_tarefa_hoje.html', context)
+            
+            # Criar a tarefa
+            task = form.save(commit=False)
+            task.day_plan = day_plan_destino
+            # Determinar ordem (próxima disponível no DayPlan de destino)
+            tarefas_destino = day_plan_destino.tasks.count()
+            task.ordem = min(tarefas_destino + 1, 3)
+            task.save()
+            
+            # Mensagem de sucesso
+            if data_escolhida == hoje:
+                messages.success(request, 'Tarefa criada para hoje!')
+            else:
+                messages.success(request, f'Tarefa agendada para {data_escolhida.strftime("%d/%m/%Y")}!')
+            
+            return redirect('core:home')
+    else:
+        form = TaskForm()
+        # Definir data inicial como hoje (quando switch desativado)
+        form.fields['data_da_tarefa'].initial = hoje
+    
+    context = {
+        'form': form,
+        'day_plan': day_plan,
+        'hoje': hoje,
+        'tarefas_existentes': day_plan.tasks.count(),
+    }
+    return render(request, 'core/criar_tarefa_hoje.html', context)
+
+
+@login_required
+def criar_tarefa_amanha(request):
+    """
+    Página para criar tarefa diretamente para amanhã (fluxo rápido).
+    
+    Não exibe calendário, sempre cria para o dia seguinte.
+    """
+    hoje = timezone.now().date()
+    from datetime import timedelta
+    amanha = hoje + timedelta(days=1)
+    
+    # Obter ou criar DayPlan para amanhã
+    day_plan, created = DayPlan.objects.get_or_create(
+        usuario=request.user,
+        data=amanha
+    )
+    
+    # Verificar se já tem 3 tarefas
+    if day_plan.tasks.count() >= 3:
+        messages.error(request, 'Você já tem 3 tarefas para amanhã. Edite ou exclua uma tarefa existente.')
+        return redirect('core:home')
+    
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            # Criar a tarefa sempre para amanhã
+            task = form.save(commit=False)
+            task.day_plan = day_plan
+            # Determinar ordem
+            tarefas_existentes = day_plan.tasks.count()
+            task.ordem = min(tarefas_existentes + 1, 3)
+            task.save()
+            
+            messages.success(request, f'Tarefa criada para amanhã ({amanha.strftime("%d/%m/%Y")})!')
+            return redirect('core:home')
+    else:
+        form = TaskForm()
+        # Não mostrar campo de data nesta página
+        form.fields['data_da_tarefa'].widget = forms.HiddenInput()
+        form.fields['data_da_tarefa'].initial = amanha
+    
+    context = {
+        'form': form,
+        'day_plan': day_plan,
+        'amanha': amanha,
+        'tarefas_existentes': day_plan.tasks.count(),
+    }
+    return render(request, 'core/criar_tarefa_amanha.html', context)
 
 
 @login_required

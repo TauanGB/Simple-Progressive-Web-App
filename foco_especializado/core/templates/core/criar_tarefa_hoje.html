@@ -1,0 +1,152 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Adicionar Tarefa - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Adicionar Tarefa{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">Para hoje ou agendar para outro dia</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        CRIAR TAREFA PARA HOJE (COM SWITCH PARA AGENDAR)
+        ============================================
+        Página para criar tarefa para hoje, com opção
+        de agendar para outro dia via switch.
+    -->
+
+    <div class="card fade-in">
+        <div class="card-body">
+            <form method="post" id="form-criar-tarefa" class="space-y-4">
+                {% csrf_token %}
+                
+                <!-- Switch: Agendar para outro dia? -->
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #F3F4F6; border-radius: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                        <input type="checkbox" 
+                               id="switch-agendar" 
+                               name="agendar_outro_dia"
+                               style="width: 2.5rem; height: 1.5rem; cursor: pointer;"
+                               onchange="toggleCampoData()">
+                        <span style="font-weight: 500; color: #374151;">
+                            Agendar para outro dia?
+                        </span>
+                    </label>
+                    <p style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem; margin-left: 3.25rem;">
+                        Quando ativado, você pode escolher uma data diferente de hoje.
+                    </p>
+                </div>
+
+                <!-- Campo de data (oculto por padrão) -->
+                <div id="campo-data-container" style="display: none; margin-bottom: 1.5rem;">
+                    <label for="{{ form.data_da_tarefa.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.data_da_tarefa.label }}
+                    </label>
+                    {{ form.data_da_tarefa }}
+                    {% if form.data_da_tarefa.help_text %}
+                        <p class="text-gray-500 text-sm mt-1">{{ form.data_da_tarefa.help_text }}</p>
+                    {% endif %}
+                    {% if form.data_da_tarefa.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.data_da_tarefa.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Título da Tarefa -->
+                <div>
+                    <label for="{{ form.titulo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.titulo.label }} <span style="color: #EF4444;">*</span>
+                    </label>
+                    {{ form.titulo }}
+                    {% if form.titulo.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.titulo.errors }}</p>
+                    {% endif %}
+                    <p class="text-gray-500 text-sm mt-1">
+                        Seja específico e claro. Ex.: "Estudar capítulo 3 por 30 minutos"
+                    </p>
+                </div>
+
+                <!-- Descrição -->
+                <div>
+                    <label for="{{ form.descricao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.descricao.label }}
+                    </label>
+                    {{ form.descricao }}
+                    {% if form.descricao.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.descricao.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Total de Etapas -->
+                <div>
+                    <label for="{{ form.total_steps.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.total_steps.label }}
+                    </label>
+                    {{ form.total_steps }}
+                    {% if form.total_steps.help_text %}
+                        <p class="text-gray-500 text-sm mt-1">{{ form.total_steps.help_text }}</p>
+                    {% endif %}
+                    {% if form.total_steps.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.total_steps.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Botões -->
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Salvar Tarefa
+                    </button>
+                    <a href="{% url 'core:home' %}" class="btn btn-secondary btn-block">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // LÓGICA DO SWITCH "AGENDAR PARA OUTRO DIA"
+    // ============================================
+    // Controla a exibição do campo de data baseado
+    // no estado do switch.
+    
+    function toggleCampoData() {
+        const switchAgendar = document.getElementById('switch-agendar');
+        const campoDataContainer = document.getElementById('campo-data-container');
+        // Buscar o campo de data pelo ID do formulário Django
+        const campoData = document.querySelector('input[type="date"]');
+        
+        if (switchAgendar && campoDataContainer) {
+            if (switchAgendar.checked) {
+                // Switch ativado: mostrar campo de data
+                campoDataContainer.style.display = 'block';
+                // Definir data padrão como amanhã se não tiver valor
+                if (campoData && !campoData.value) {
+                    const hoje = new Date();
+                    const amanha = new Date(hoje);
+                    amanha.setDate(amanha.getDate() + 1);
+                    campoData.value = amanha.toISOString().split('T')[0];
+                }
+            } else {
+                // Switch desativado: ocultar campo de data
+                campoDataContainer.style.display = 'none';
+                // Limpar valor do campo (será sempre hoje quando desativado)
+                if (campoData) {
+                    campoData.value = '';
+                }
+            }
+        }
+    }
+    
+    // Inicializar estado do switch ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleCampoData();
+    });
+</script>
+{% endblock %}
+
