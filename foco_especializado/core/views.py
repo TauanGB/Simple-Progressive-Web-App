@@ -18,6 +18,7 @@ from django.conf import settings
 from .models import DayPlan, Task
 from .ai_service import sugerir_tarefas_por_ia
 from .forms import DayPlanForm, TaskForm, RevisaoDiaForm
+from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia
 
 
 @login_required
@@ -60,6 +61,8 @@ def criar_plano_dia(request):
     1. Primeira tarefa importante
     2. Segunda tarefa importante
     3. Pergunta se quer adicionar terceira
+    
+    Agora permite programar tarefas para dias específicos.
     """
     hoje = timezone.now().date()
     
@@ -79,17 +82,38 @@ def criar_plano_dia(request):
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
+            # Obter a data escolhida pelo usuário (ou usar hoje como padrão)
+            data_escolhida = form.cleaned_data.get('data_da_tarefa') or hoje
+            
+            # Obter ou criar DayPlan para a data escolhida
+            day_plan_destino, _ = obter_ou_criar_day_plan(
+                request.user,
+                data_escolhida
+            )
+            
+            # Verificar se o DayPlan de destino já tem 3 tarefas
+            if day_plan_destino.tasks.count() >= 3:
+                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia ou edite as tarefas existentes.')
+                return redirect('core:criar_plano_dia')
+            
+            # Criar a tarefa
             task = form.save(commit=False)
-            task.day_plan = day_plan
-            task.ordem = tarefas_existentes + 1
+            task.day_plan = day_plan_destino
+            # Determinar ordem (próxima disponível no DayPlan de destino)
+            tarefas_destino = day_plan_destino.tasks.count()
+            task.ordem = min(tarefas_destino + 1, 3)
             task.save()
             
-            # Se ainda não tem 3 tarefas, continua o fluxo
+            # Mensagem de sucesso indicando a data
+            if data_escolhida == hoje:
+                messages.success(request, f'Tarefa {task.ordem} criada para hoje!')
+            else:
+                messages.success(request, f'Tarefa {task.ordem} criada para {data_escolhida.strftime("%d/%m/%Y")}!')
+            
+            # Se ainda não tem 3 tarefas no plano de hoje, continua o fluxo
             if day_plan.tasks.count() < 3:
-                messages.success(request, f'Tarefa {task.ordem} criada!')
                 return redirect('core:criar_plano_dia')
             else:
-                messages.success(request, 'Todas as tarefas do dia foram criadas!')
                 return redirect('core:home')
     else:
         form = TaskForm()
@@ -106,14 +130,66 @@ def criar_plano_dia(request):
 
 @login_required
 def editar_tarefa(request, task_id):
-    """Edita uma tarefa existente."""
+    """
+    Edita uma tarefa existente.
+    
+    Permite alterar a data da tarefa, movendo-a para outro DayPlan se necessário.
+    """
     task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    day_plan_original = task.day_plan
+    ordem_original = task.ordem
     
     if request.method == 'POST':
         form = TaskForm(request.POST, instance=task)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Tarefa atualizada!')
+            # Obter a nova data escolhida (ou manter a atual)
+            nova_data = form.cleaned_data.get('data_da_tarefa') or day_plan_original.data
+            
+            # Se a data mudou, mover a tarefa para o novo DayPlan
+            if nova_data != day_plan_original.data:
+                # Obter ou criar DayPlan para a nova data
+                day_plan_destino, _ = obter_ou_criar_day_plan(
+                    request.user,
+                    nova_data
+                )
+                
+                # Verificar se o DayPlan de destino já tem 3 tarefas
+                if day_plan_destino.tasks.count() >= 3:
+                    messages.error(request, f'O dia {nova_data.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia.')
+                    context = {
+                        'form': form,
+                        'task': task,
+                        'day_plan': day_plan_original,
+                    }
+                    return render(request, 'core/editar_tarefa.html', context)
+                
+                # Salvar os campos do formulário primeiro (sem commit)
+                task = form.save(commit=False)
+                
+                # Mover a tarefa para o novo DayPlan
+                task.day_plan = day_plan_destino
+                # Determinar nova ordem (próxima disponível no DayPlan de destino)
+                tarefas_destino = day_plan_destino.tasks.count()
+                task.ordem = min(tarefas_destino + 1, 3)
+                
+                # Salvar a tarefa
+                task.save()
+                
+                # Reordenar tarefas do DayPlan original se necessário
+                # (opcional: ajustar ordens das tarefas restantes)
+                tarefas_restantes = day_plan_original.tasks.exclude(id=task.id).order_by('ordem')
+                for idx, tarefa_restante in enumerate(tarefas_restantes, start=1):
+                    if tarefa_restante.ordem != idx:
+                        tarefa_restante.ordem = idx
+                        tarefa_restante.save()
+                
+                messages.success(request, f'Tarefa movida para {nova_data.strftime("%d/%m/%Y")} e atualizada!')
+            else:
+                # Apenas atualizar os campos da tarefa (data não mudou)
+                form.save()
+                messages.success(request, 'Tarefa atualizada!')
+            
+            # Redirecionar para a home (ou poderia redirecionar para o dia específico)
             return redirect('core:home')
     else:
         form = TaskForm(instance=task)
@@ -121,7 +197,7 @@ def editar_tarefa(request, task_id):
     context = {
         'form': form,
         'task': task,
-        'day_plan': task.day_plan,
+        'day_plan': day_plan_original,
     }
     return render(request, 'core/editar_tarefa.html', context)
 
@@ -250,6 +326,60 @@ def deletar_tarefa(request, task_id):
         'day_plan': day_plan,
     }
     return render(request, 'core/deletar_tarefa.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def adicionar_ao_dia_seguinte(request, task_id):
+    """
+    Ação rápida: adiciona uma tarefa ao dia seguinte.
+    
+    Cria uma nova tarefa baseada na tarefa atual, mas para o próximo dia.
+    A nova tarefa começa com status pendente e progresso zerado.
+    
+    Retorna JSON para requisições AJAX.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    try:
+        nova_tarefa = clonar_tarefa_para_proximo_dia(task)
+        
+        # Calcular data do próximo dia para mensagem
+        from datetime import timedelta
+        data_proximo_dia = task.day_plan.data + timedelta(days=1)
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'Tarefa adicionada ao dia seguinte ({data_proximo_dia.strftime("%d/%m/%Y")})',
+                'nova_tarefa_id': nova_tarefa.id,
+                'data_proximo_dia': data_proximo_dia.strftime('%Y-%m-%d'),
+            })
+        
+        messages.success(request, f'Tarefa adicionada ao dia seguinte ({data_proximo_dia.strftime("%d/%m/%Y")})!')
+        return redirect('core:home')
+    
+    except ValueError as e:
+        # Erro: dia seguinte já tem 3 tarefas
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+        
+        messages.error(request, str(e))
+        return redirect('core:home')
+    
+    except Exception as e:
+        # Outros erros
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'Erro ao adicionar tarefa ao dia seguinte'
+            }, status=500)
+        
+        messages.error(request, 'Erro ao adicionar tarefa ao dia seguinte.')
+        return redirect('core:home')
 
 
 @login_required

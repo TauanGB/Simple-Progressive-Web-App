@@ -55,12 +55,27 @@
                 {% endif %}
             </div>
 
+            <div>
+                <label for="{{ form.data_da_tarefa.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.data_da_tarefa.label }}
+                </label>
+                {{ form.data_da_tarefa }}
+                {% if form.data_da_tarefa.help_text %}
+                    <p class="text-gray-500 text-sm mt-1">{{ form.data_da_tarefa.help_text }}</p>
+                {% endif %}
+                {% if form.data_da_tarefa.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.data_da_tarefa.errors }}</p>
+                {% endif %}
+            </div>
+
             <div class="flex gap-4 pt-4">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold">
-                    Salvar Tarefa
+                <button type="submit" class="btn-icon-text btn-icon-text-primary">
+                    <i class="fas fa-save"></i>
+                    <span>Salvar Tarefa</span>
                 </button>
-                <a href="{% url 'core:home' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-semibold">
-                    Cancelar
+                <a href="{% url 'core:home' %}" class="btn-icon-text btn-icon-secondary">
+                    <i class="fas fa-times"></i>
+                    <span>Cancelar</span>
                 </a>
             </div>
         </form>
@@ -87,9 +102,11 @@
                     <button 
                         type="button" 
                         id="btn-sugerir-ia" 
-                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold"
+                        class="btn-icon-text"
+                        style="background-color: #9333EA; color: white; border-color: #9333EA;"
                     >
-                        Sugerir Tarefas com IA
+                        <i class="fas fa-magic"></i>
+                        <span>Sugerir Tarefas com IA</span>
                     </button>
                 </div>
 
@@ -100,9 +117,11 @@
                     <button 
                         type="button" 
                         id="btn-aplicar-sugestoes" 
-                        class="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold hidden"
+                        class="btn-icon-text hidden"
+                        style="background-color: #16A34A; color: white; border-color: #16A34A; margin-top: 1rem;"
                     >
-                        Aplicar Sugestões
+                        <i class="fas fa-check-circle"></i>
+                        <span>Aplicar Sugestões</span>
                     </button>
                 </div>
             </div>

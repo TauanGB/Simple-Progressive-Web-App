@@ -36,9 +36,12 @@
                     <div class="card fade-in" style="cursor: pointer;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
                             <div style="flex: 1;">
-                                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: #111827;">
-                                    {{ plan.data|date:"l, d \\d\\e F"|capfirst }}
-                                </h3>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-calendar-day" style="color: #6B7280; font-size: 0.875rem;"></i>
+                                    <h3 style="font-size: 1.125rem; font-weight: 600; margin: 0; color: #111827;">
+                                        {{ plan.data|date:"l, d \\d\\e F"|capfirst }}
+                                    </h3>
+                                </div>
                                 <p style="font-size: 0.875rem; color: #6B7280; margin: 0;">
                                     {{ plan.tarefas_concluidas }} de {{ plan.total_tarefas }} tarefas concluídas
                                 </p>
@@ -53,19 +56,20 @@
                                          style="width: {{ plan.percentual_conclusao }}%"></div>
                                 </div>
                             </div>
-                            <div style="text-align: right; flex-shrink: 0;">
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #4F46E5; margin-bottom: 0.25rem;">
+                            <div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #4F46E5; margin: 0;">
                                     {{ plan.percentual_conclusao }}%
                                 </div>
                                 <span class="badge {% if plan.percentual_conclusao == 100 %}badge-success{% elif plan.percentual_conclusao > 0 %}badge-warning{% else %}badge-info{% endif %}">
                                     {% if plan.percentual_conclusao == 100 %}
-                                        Completo
+                                        <i class="fas fa-check-circle"></i> Completo
                                     {% elif plan.percentual_conclusao > 0 %}
-                                        Em progresso
+                                        <i class="fas fa-spinner"></i> Em progresso
                                     {% else %}
-                                        Pendente
+                                        <i class="fas fa-clock"></i> Pendente
                                     {% endif %}
                                 </span>
+                                <i class="fas fa-chevron-right" style="color: #9CA3AF; font-size: 0.875rem; margin-top: 0.25rem;"></i>
                             </div>
                         </div>
                     </div>
@@ -78,8 +82,9 @@
             <p style="color: #6B7280; margin-bottom: 1.5rem; font-size: 1rem;">
                 Você ainda não tem histórico de dias.
             </p>
-            <a href="{% url 'core:home' %}" class="btn btn-primary">
-                Voltar para Hoje
+            <a href="{% url 'core:home' %}" class="btn-icon-text btn-icon-text-primary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar para Hoje</span>
             </a>
         </div>
     {% endif %}

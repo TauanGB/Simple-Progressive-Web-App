@@ -8,6 +8,17 @@ from .models import DayPlan, Task
 class TaskForm(forms.ModelForm):
     """Formulário para criar/editar tarefas."""
     
+    # Campo de data para programar tarefa em dia específico
+    data_da_tarefa = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+        }),
+        label='Dia da Tarefa',
+        help_text='Escolha a data para esta tarefa. Deixe em branco para usar a data de hoje.'
+    )
+    
     class Meta:
         model = Task
         fields = ['titulo', 'descricao', 'total_steps']
@@ -42,6 +53,16 @@ class TaskForm(forms.ModelForm):
         self.fields['titulo'].required = True
         self.fields['descricao'].required = False
         self.fields['total_steps'].required = False
+        
+        # Definir valor inicial do campo de data
+        from django.utils import timezone
+        if self.instance and self.instance.pk:
+            # Se estiver editando uma tarefa existente, usar a data atual do day_plan
+            self.fields['data_da_tarefa'].initial = self.instance.day_plan.data
+        else:
+            # Se for uma nova tarefa, usar a data de hoje
+            if not self.fields['data_da_tarefa'].initial:
+                self.fields['data_da_tarefa'].initial = timezone.now().date()
 
 
 class DayPlanForm(forms.ModelForm):

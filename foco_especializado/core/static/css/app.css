@@ -904,3 +904,180 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
     }
 }
 
+/* ============================================
+   ESTILOS PARA BOTÕES DE ÍCONES
+   ============================================
+   
+   Estilos para substituir botões de texto por ícones autoexplicativos,
+   reduzindo poluição visual e melhorando a experiência mobile.
+   
+   Biblioteca de ícones: Font Awesome 6.4.0 (via CDN no base.html)
+   
+   Classes principais:
+   - .btn-icon: Botão circular apenas com ícone (40x40px em desktop, 44x44px em mobile)
+   - .btn-icon-text: Botão com ícone + texto (para ações importantes)
+   - .task-actions-icons: Container flex para linha de ações compacta
+   
+   Variações de cor:
+   - .btn-icon-primary: Azul (ações principais)
+   - .btn-icon-success: Verde (concluir, salvar)
+   - .btn-icon-danger: Vermelho (excluir, ações destrutivas)
+   - .btn-icon-secondary: Cinza (editar, cancelar)
+   
+   Acessibilidade:
+   - Todos os botões de ícone devem ter aria-label e title
+   - Tamanho mínimo de 44x44px em mobile para facilitar toque
+   - Confirmação para ações destrutivas (ex.: excluir)
+*/
+
+/* Linha de ações compacta com ícones */
+.task-actions-icons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+/* Botão de ícone - estilo base */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.btn-icon:hover {
+    background: var(--gray-200);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-icon:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.btn-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Variações de cor para botões de ícone */
+.btn-icon-primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-icon-primary:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.btn-icon-success {
+    background: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.btn-icon-success:hover {
+    background: var(--success-dark);
+    color: white;
+}
+
+.btn-icon-danger {
+    background: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
+.btn-icon-danger:hover {
+    background: #DC2626;
+    color: white;
+}
+
+.btn-icon-secondary {
+    background: var(--gray-200);
+    color: var(--gray-700);
+    border-color: var(--gray-300);
+}
+
+.btn-icon-secondary:hover {
+    background: var(--gray-300);
+    color: var(--gray-800);
+}
+
+/* Tamanhos de botões de ícone */
+.btn-icon-sm {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 0.875rem;
+}
+
+.btn-icon-lg {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    font-size: 1.25rem;
+}
+
+/* Em mobile, garantir tamanho mínimo para toque */
+@media (max-width: 768px) {
+    .btn-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+    
+    .task-actions-icons {
+        gap: 0.75rem;
+    }
+}
+
+/* Botões de ação rápida com ícone + texto (opcional) */
+.btn-icon-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.btn-icon-text:hover {
+    background: var(--gray-200);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-icon-text-primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-icon-text-primary:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+

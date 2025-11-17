@@ -120,42 +120,67 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="task-actions" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
-                            <!-- Botões A e B -->
-                            <div style="display: flex; gap: 0.5rem;">
-                                <form method="post" action="{% url 'core:avancar_etapa' task.id %}" class="task-advance-form" style="flex: 1;">
-                                    {% csrf_token %}
-                                    <button type="submit" 
-                                            class="btn btn-primary btn-sm btn-block" 
-                                            {% if task.status == 'concluida' %}disabled{% endif %}>
-                                        ➕ Avançar Etapa
-                                    </button>
-                                </form>
-                                <form method="post" action="{% url 'core:concluir_tarefa' task.id %}" class="task-complete-form" style="flex: 1;">
-                                    {% csrf_token %}
-                                    <button type="submit" 
-                                            class="btn btn-success btn-sm btn-block"
-                                            {% if task.status == 'concluida' %}disabled{% endif %}>
-                                        ✓ Concluir
-                                    </button>
-                                </form>
-                            </div>
-                            <!-- Botões secundários -->
-                            <div style="display: flex; gap: 0.5rem;">
-                                <a href="{% url 'core:editar_tarefa' task.id %}" class="btn btn-secondary btn-sm" style="flex: 1;">
-                                    Editar
-                                </a>
-                                <a href="{% url 'core:deletar_tarefa' task.id %}" class="btn btn-danger btn-sm" style="flex: 1;">
-                                    Deletar
-                                </a>
-                            </div>
+                        <!-- Linha de ações com ícones -->
+                        <div class="task-actions-icons">
+                            <!-- Avançar Etapa (Botão A) -->
+                            <form method="post" action="{% url 'core:avancar_etapa' task.id %}" class="task-advance-form" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn-icon btn-icon-primary"
+                                        {% if task.status == 'concluida' %}disabled{% endif %}
+                                        aria-label="Avançar etapa"
+                                        title="Avançar etapa">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </form>
+                            
+                            <!-- Concluir Tarefa (Botão B) -->
+                            <form method="post" action="{% url 'core:concluir_tarefa' task.id %}" class="task-complete-form" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn-icon btn-icon-success"
+                                        {% if task.status == 'concluida' %}disabled{% endif %}
+                                        aria-label="Concluir tarefa"
+                                        title="Concluir tarefa">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            
+                            <!-- Adicionar ao Dia Seguinte -->
+                            <form method="post" action="{% url 'core:adicionar_ao_dia_seguinte' task.id %}" class="task-add-next-day-form" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn-icon btn-icon-secondary"
+                                        aria-label="Adicionar ao dia seguinte"
+                                        title="Adicionar esta tarefa ao dia seguinte">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </button>
+                            </form>
+                            
+                            <!-- Editar Tarefa -->
+                            <a href="{% url 'core:editar_tarefa' task.id %}" 
+                               class="btn-icon btn-icon-secondary"
+                               aria-label="Editar tarefa"
+                               title="Editar tarefa">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            
+                            <!-- Deletar Tarefa -->
+                            <a href="{% url 'core:deletar_tarefa' task.id %}" 
+                               class="btn-icon btn-icon-danger"
+                               aria-label="Excluir tarefa"
+                               title="Excluir tarefa"
+                               onclick="return confirm('Tem certeza que deseja excluir esta tarefa?');">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
                         </div>
                     </div>
                 {% empty %}
                     <div style="text-align: center; padding: 2rem 0;">
                         <p style="color: #6B7280; margin-bottom: 1rem;">Você ainda não tem tarefas para hoje.</p>
-                        <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary">
-                            Criar Tarefas do Dia
+                        <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Criar Tarefas do Dia</span>
                         </a>
                     </div>
                 {% endfor %}
@@ -176,12 +201,14 @@
             <div class="card-body" style="padding-top: 0;">
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     {% if total_tarefas < 3 %}
-                        <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary btn-block">
-                            ➕ Adicionar Tarefa
+                        <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary">
+                            <i class="fas fa-plus"></i>
+                            <span>Adicionar Tarefa</span>
                         </a>
                     {% endif %}
-                    <a href="{% url 'core:revisao_dia' %}" class="btn btn-primary btn-block" style="background-color: #7C3AED;">
-                        ✍️ Revisar meu dia
+                    <a href="{% url 'core:revisao_dia' %}" class="btn-icon-text" style="background-color: #7C3AED; color: white; border-color: #7C3AED;">
+                        <i class="fas fa-edit"></i>
+                        <span>Revisar meu dia</span>
                     </a>
                 </div>
             </div>
@@ -204,8 +231,9 @@
                 <p style="font-size: 0.875rem; color: #4B5563; margin-bottom: 1rem;">
                     Precisa de ajuda para definir suas tarefas de hoje? Use nossa sugestão inteligente!
                 </p>
-                <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary btn-sm" style="background-color: #6366F1;">
-                    Obter Sugestões
+                <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary" style="background-color: #6366F1;">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Obter Sugestões</span>
                 </a>
             </div>
         </div>
@@ -227,9 +255,10 @@
                 Defina até 3 tarefas importantes para hoje.<br>
                 <strong>Menos é mais!</strong>
             </p>
-            <a href="{% url 'core:criar_plano_dia' %}" class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem 2rem;">
-                Criar Tarefas do Dia
-            </a>
+                <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary" style="font-size: 1.125rem; padding: 1rem 2rem;">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Criar Tarefas do Dia</span>
+                </a>
         </div>
     {% endif %}
 {% endblock %}
@@ -377,6 +406,50 @@
             .catch(error => {
                 console.error('Erro:', error);
                 alert('Erro ao concluir tarefa. Tente novamente.');
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        });
+    });
+    
+    // Handler para botão "Adicionar ao Dia Seguinte"
+    document.querySelectorAll('.task-add-next-day-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            const taskCard = this.closest('.task-card');
+            
+            // Feedback visual
+            button.disabled = true;
+            button.textContent = '...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar mensagem de sucesso
+                    alert(data.message || 'Tarefa adicionada ao dia seguinte!');
+                    // Recarregar após um pequeno delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert(data.error || 'Erro ao adicionar tarefa ao dia seguinte');
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao adicionar tarefa ao dia seguinte. Tente novamente.');
                 button.disabled = false;
                 button.textContent = originalText;
             });
