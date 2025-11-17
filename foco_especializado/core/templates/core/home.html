@@ -120,44 +120,67 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <!-- Linha de ações com ícones -->
-                        <div class="task-actions-icons">
-                            <!-- Avançar Etapa (Botão A) -->
+                        <!-- Linha de ações -->
+                        <div class="task-actions-icons" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                            <!-- 
+                                ============================================
+                                AÇÕES COM ÍCONE + TEXTO
+                                ============================================
+                                Avançar etapa, Concluir e Adicionar ao dia seguinte
+                                são ações específicas do contexto do app, então
+                                exibimos ícone + texto para maior clareza.
+                            -->
+                            
+                            <!-- Avançar Etapa (Botão A) - ÍCONE + TEXTO -->
                             <form method="post" action="{% url 'core:avancar_etapa' task.id %}" class="task-advance-form" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" 
-                                        class="btn-icon btn-icon-primary"
+                                        class="btn btn-primary btn-sm"
+                                        style="display: inline-flex; align-items: center; gap: 0.5rem;"
                                         {% if task.status == 'concluida' %}disabled{% endif %}
                                         aria-label="Avançar etapa"
                                         title="Avançar etapa">
                                     <i class="fas fa-arrow-right"></i>
+                                    <span>Avançar etapa</span>
                                 </button>
                             </form>
                             
-                            <!-- Concluir Tarefa (Botão B) -->
+                            <!-- Concluir Tarefa (Botão B) - ÍCONE + TEXTO -->
                             <form method="post" action="{% url 'core:concluir_tarefa' task.id %}" class="task-complete-form" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" 
-                                        class="btn-icon btn-icon-success"
+                                        class="btn btn-success btn-sm"
+                                        style="display: inline-flex; align-items: center; gap: 0.5rem;"
                                         {% if task.status == 'concluida' %}disabled{% endif %}
                                         aria-label="Concluir tarefa"
                                         title="Concluir tarefa">
                                     <i class="fas fa-check"></i>
+                                    <span>Concluir</span>
                                 </button>
                             </form>
                             
-                            <!-- Adicionar ao Dia Seguinte -->
+                            <!-- Adicionar ao Dia Seguinte - ÍCONE + TEXTO -->
                             <form method="post" action="{% url 'core:adicionar_ao_dia_seguinte' task.id %}" class="task-add-next-day-form" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" 
-                                        class="btn-icon btn-icon-secondary"
+                                        class="btn btn-secondary btn-sm"
+                                        style="display: inline-flex; align-items: center; gap: 0.5rem;"
                                         aria-label="Adicionar ao dia seguinte"
                                         title="Adicionar esta tarefa ao dia seguinte">
                                     <i class="fas fa-calendar-plus"></i>
+                                    <span>Dia seguinte</span>
                                 </button>
                             </form>
                             
-                            <!-- Editar Tarefa -->
+                            <!-- 
+                                ============================================
+                                AÇÕES COM APENAS ÍCONE
+                                ============================================
+                                Editar e Excluir são ações padronizadas na web,
+                                então podem usar apenas ícone (com aria-label).
+                            -->
+                            
+                            <!-- Editar Tarefa - APENAS ÍCONE -->
                             <a href="{% url 'core:editar_tarefa' task.id %}" 
                                class="btn-icon btn-icon-secondary"
                                aria-label="Editar tarefa"
@@ -165,7 +188,7 @@
                                 <i class="fas fa-pencil-alt"></i>
                             </a>
                             
-                            <!-- Deletar Tarefa -->
+                            <!-- Deletar Tarefa - APENAS ÍCONE -->
                             <a href="{% url 'core:deletar_tarefa' task.id %}" 
                                class="btn-icon btn-icon-danger"
                                aria-label="Excluir tarefa"
@@ -178,9 +201,8 @@
                 {% empty %}
                     <div style="text-align: center; padding: 2rem 0;">
                         <p style="color: #6B7280; margin-bottom: 1rem;">Você ainda não tem tarefas para hoje.</p>
-                        <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Criar Tarefas do Dia</span>
+                        <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn btn-primary">
+                            ➕ Adicionar Tarefa
                         </a>
                     </div>
                 {% endfor %}
@@ -201,9 +223,13 @@
             <div class="card-body" style="padding-top: 0;">
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     {% if total_tarefas < 3 %}
-                        <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary">
+                        <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary">
                             <i class="fas fa-plus"></i>
                             <span>Adicionar Tarefa</span>
+                        </a>
+                        <a href="{% url 'core:criar_tarefa_amanha' %}" class="btn-icon-text btn-icon-secondary">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Adicionar para Amanhã</span>
                         </a>
                     {% endif %}
                     <a href="{% url 'core:revisao_dia' %}" class="btn-icon-text" style="background-color: #7C3AED; color: white; border-color: #7C3AED;">
@@ -231,7 +257,7 @@
                 <p style="font-size: 0.875rem; color: #4B5563; margin-bottom: 1rem;">
                     Precisa de ajuda para definir suas tarefas de hoje? Use nossa sugestão inteligente!
                 </p>
-                <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary" style="background-color: #6366F1;">
+                <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary" style="background-color: #6366F1;">
                     <i class="fas fa-lightbulb"></i>
                     <span>Obter Sugestões</span>
                 </a>
@@ -255,7 +281,7 @@
                 Defina até 3 tarefas importantes para hoje.<br>
                 <strong>Menos é mais!</strong>
             </p>
-                <a href="{% url 'core:criar_plano_dia' %}" class="btn-icon-text btn-icon-text-primary" style="font-size: 1.125rem; padding: 1rem 2rem;">
+                <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary" style="font-size: 1.125rem; padding: 1rem 2rem;">
                     <i class="fas fa-plus-circle"></i>
                     <span>Criar Tarefas do Dia</span>
                 </a>

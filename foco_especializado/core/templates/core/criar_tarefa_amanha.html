@@ -1,0 +1,81 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Adicionar Tarefa para Amanhã - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Adicionar Tarefa{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">Para amanhã ({{ amanha|date:"d/m/Y" }})</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        CRIAR TAREFA PARA AMANHÃ (FLUXO RÁPIDO)
+        ============================================
+        Página para criar tarefa diretamente para
+        amanhã, sem campo de calendário.
+    -->
+
+    <div class="card fade-in">
+        <div class="card-body">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <!-- Campo de data oculto (sempre amanhã) -->
+                {{ form.data_da_tarefa }}
+                
+                <!-- Título da Tarefa -->
+                <div>
+                    <label for="{{ form.titulo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.titulo.label }} <span style="color: #EF4444;">*</span>
+                    </label>
+                    {{ form.titulo }}
+                    {% if form.titulo.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.titulo.errors }}</p>
+                    {% endif %}
+                    <p class="text-gray-500 text-sm mt-1">
+                        Seja específico e claro. Ex.: "Estudar capítulo 3 por 30 minutos"
+                    </p>
+                </div>
+
+                <!-- Descrição -->
+                <div>
+                    <label for="{{ form.descricao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.descricao.label }}
+                    </label>
+                    {{ form.descricao }}
+                    {% if form.descricao.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.descricao.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Total de Etapas -->
+                <div>
+                    <label for="{{ form.total_steps.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.total_steps.label }}
+                    </label>
+                    {{ form.total_steps }}
+                    {% if form.total_steps.help_text %}
+                        <p class="text-gray-500 text-sm mt-1">{{ form.total_steps.help_text }}</p>
+                    {% endif %}
+                    {% if form.total_steps.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.total_steps.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Botões -->
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Salvar Tarefa
+                    </button>
+                    <a href="{% url 'core:home' %}" class="btn btn-secondary btn-block">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
