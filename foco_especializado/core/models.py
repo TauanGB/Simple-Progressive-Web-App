@@ -203,12 +203,35 @@ class Task(models.Model):
         return f"{self.ordem}. {self.titulo} - {self.day_plan.data}"
     
     def save(self, *args, **kwargs):
-        """Sobrescreve save para calcular progresso automaticamente."""
-        # Se o progresso não foi definido ou se a tarefa não está concluída, recalcula
+        """
+        Sobrescreve save para calcular progresso automaticamente e garantir
+        que novas tarefas sempre tenham status 'pendente'.
+        """
+        # Se é uma nova tarefa (sem pk), garante que status seja 'pendente'
+        # a menos que explicitamente definido como 'concluida'
+        if not self.pk:
+            # Nova tarefa: garante status 'pendente' se não foi explicitamente definido
+            if not hasattr(self, '_status_explicitly_set') or not self._status_explicitly_set:
+                if self.status != 'concluida':
+                    self.status = 'pendente'
+                # Garante que concluida_em seja None para novas tarefas pendentes
+                if self.status == 'pendente':
+                    self.concluida_em = None
+        else:
+            # Tarefa existente: validação de integridade
+            # Se status mudou para 'pendente', limpa concluida_em
+            if self.status == 'pendente' and self.concluida_em:
+                self.concluida_em = None
+            # Se status é 'concluida' mas não tem concluida_em, define agora
+            if self.status == 'concluida' and not self.concluida_em:
+                self.concluida_em = timezone.now()
+        
+        # Calcula progresso automaticamente
         if self.status != 'concluida':
             self.progress_percent = self.calcular_progresso()
         elif self.status == 'concluida':
             self.progress_percent = 100
+        
         super().save(*args, **kwargs)
 
     def calcular_progresso(self):

@@ -288,6 +288,112 @@
 {% block extra_js %}
 <script>
     // ============================================
+    // VERIFICAÇÃO DE SINCRONIZAÇÃO DE DIA (HOME)
+    // ============================================
+    // Verifica se a data do servidor corresponde à
+    // data esperada no navegador e valida integridade das tarefas.
+    (function() {
+        'use strict';
+        
+        // Obtém a data do contexto Django (formato: {{ hoje|date:"Y-m-d" }})
+        const serverDate = '{{ hoje|date:"Y-m-d" }}';
+        
+        // Obtém a data atual do navegador
+        function getCurrentDateString() {
+            const now = new Date();
+            return now.toISOString().split('T')[0];
+        }
+        
+        const clientDate = getCurrentDateString();
+        
+        // Verifica integridade das tarefas na página
+        function validateTasksIntegrity() {
+            const taskCards = document.querySelectorAll('.task-card');
+            let inconsistencies = [];
+            
+            taskCards.forEach(function(taskCard) {
+                const taskId = taskCard.getAttribute('data-task-id');
+                const isCompleted = taskCard.classList.contains('completed');
+                const statusBadge = taskCard.querySelector('.badge-success, .badge-info');
+                const completeButton = taskCard.querySelector('button[type="submit"]:disabled');
+                
+                // Verifica se há inconsistências visuais
+                if (isCompleted && !completeButton) {
+                    inconsistencies.push({
+                        taskId: taskId,
+                        issue: 'Tarefa marcada como concluída mas botão não está desabilitado'
+                    });
+                }
+                
+                // Verifica se há tarefas que aparecem como concluídas mas não deveriam
+                // (tarefas criadas recentemente não devem estar concluídas)
+                const taskTitle = taskCard.querySelector('.task-title');
+                if (taskTitle && isCompleted) {
+                    // Log para debug
+                    console.log('[Task Validation] Tarefa encontrada como concluída:', {
+                        taskId: taskId,
+                        title: taskTitle.textContent,
+                        isCompleted: isCompleted
+                    });
+                }
+            });
+            
+            if (inconsistencies.length > 0) {
+                console.warn('[Task Validation] Inconsistências detectadas:', inconsistencies);
+                // Não força recarregamento aqui, apenas loga para debug
+                // O recarregamento será feito pela verificação de data se necessário
+            }
+            
+            return inconsistencies.length === 0;
+        }
+        
+        // Compara as datas
+        if (serverDate && clientDate && serverDate !== clientDate) {
+            console.warn('[Day Sync Home] Inconsistência detectada:', {
+                serverDate: serverDate,
+                clientDate: clientDate,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Valida tarefas antes de recarregar
+            validateTasksIntegrity();
+            
+            // Se há diferença, força recarregamento
+            // Isso pode acontecer se o cache do service worker estiver servindo
+            // uma versão antiga da página
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'FORCE_REFRESH',
+                    reason: 'date_mismatch'
+                });
+            }
+            
+            // Verifica se há operação em andamento antes de recarregar
+            const operationInProgress = localStorage.getItem('app_operation_in_progress');
+            if (operationInProgress) {
+                console.log('[Day Sync Home] Operação em andamento detectada, aguardando antes de recarregar...');
+                // Aguarda 3 segundos antes de recarregar
+                setTimeout(function() {
+                    window.location.reload(true);
+                }, 3000);
+            } else {
+                // Recarrega a página para obter dados atualizados
+                setTimeout(function() {
+                    window.location.reload(true);
+                }, 100);
+            }
+        } else {
+            // Se as datas coincidem, valida integridade das tarefas
+            validateTasksIntegrity();
+            
+            // Salva no localStorage para referência futura
+            if (serverDate) {
+                localStorage.setItem('app_last_verified_day', serverDate);
+            }
+        }
+    })();
+    
+    // ============================================
     // ATUALIZAR PROGRESSO SEM RECARREGAR
     // ============================================
     // Atualiza o progresso da tarefa via AJAX para

@@ -82,7 +82,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(networkFirstStrategy(request, { offlineFallback: true }));
+    // Para HTML, sempre prioriza network para garantir dados atualizados
+    // Especialmente importante na mudança de dia
+    event.respondWith(networkFirstStrategy(request, { 
+      offlineFallback: true,
+      bypassCacheOnNewDay: true 
+    }));
   }
 });
 
@@ -119,6 +124,32 @@ async function cacheFirstStrategy(request) {
 
 async function networkFirstStrategy(request, options = {}) {
   try {
+    // Se a opção bypassCacheOnNewDay estiver ativa, verifica se é um novo dia
+    if (options.bypassCacheOnNewDay) {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        // Verifica a data do cache vs data atual
+        const cacheDate = cachedResponse.headers.get('date');
+        const now = new Date();
+        const cacheTime = cacheDate ? new Date(cacheDate) : null;
+        
+        // Se o cache é de um dia diferente, força busca na rede
+        if (cacheTime) {
+          const cacheDay = cacheTime.toISOString().split('T')[0];
+          const currentDay = now.toISOString().split('T')[0];
+          
+          if (cacheDay !== currentDay) {
+            console.log('[Service Worker] Cache HTML é de outro dia, buscando versão atualizada');
+            // Continua para buscar na rede
+          } else {
+            // Cache é do mesmo dia, pode usar (mas ainda tenta atualizar em background)
+            // Não retorna cache imediatamente, mas tenta network primeiro
+          }
+        }
+      }
+    }
+    
+    // Tenta buscar na rede primeiro
     const response = await fetch(request);
     if (response && response.status === 200) {
       const cache = await caches.open(RUNTIME_CACHE);
@@ -126,6 +157,7 @@ async function networkFirstStrategy(request, options = {}) {
     }
     return response;
   } catch (error) {
+    // Se falhou na rede, tenta cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
@@ -192,11 +224,55 @@ self.addEventListener('message', (event) => {
   if (data.type === 'CACHE_URLS' && Array.isArray(data.urls)) {
     event.waitUntil(cacheUrls(data.urls));
   }
+  
+  // Trata mensagens de mudança de dia
+  if (data.type === 'DAY_CHANGED' || data.type === 'FORCE_REFRESH') {
+    console.log('[Service Worker] Mudança de dia detectada, invalidando cache HTML');
+    event.waitUntil(invalidateHtmlCache());
+  }
 });
 
 async function cacheUrls(urls) {
   const cache = await caches.open(RUNTIME_CACHE);
   await cache.addAll(urls);
+}
+
+/**
+ * Invalida cache de páginas HTML quando o dia muda.
+ * Remove todas as entradas HTML do cache RUNTIME para forçar
+ * busca de versão atualizada do servidor.
+ */
+async function invalidateHtmlCache() {
+  try {
+    const cache = await caches.open(RUNTIME_CACHE);
+    const keys = await cache.keys();
+    
+    // Remove apenas requisições HTML do cache
+    // Identifica HTML pela URL (não inclui /static/, /api/, etc)
+    const htmlRequests = keys.filter((request) => {
+      const url = new URL(request.url);
+      // URLs que não são assets estáticos ou APIs são consideradas HTML
+      return !url.pathname.includes('/static/') &&
+             !url.pathname.includes('/api/') &&
+             !url.pathname.includes('/manifest.json') &&
+             !url.pathname.includes('/service-worker.js') &&
+             !url.pathname.includes('/offline/');
+    });
+    
+    await Promise.all(htmlRequests.map((request) => cache.delete(request)));
+    console.log(`[Service Worker] ${htmlRequests.length} entradas HTML removidas do cache`);
+    
+    // Notifica todos os clientes sobre a invalidação
+    const clientsList = await clients.matchAll({ includeUncontrolled: true });
+    clientsList.forEach((client) => {
+      client.postMessage({
+        type: 'CACHE_INVALIDATED',
+        reason: 'day_changed'
+      });
+    });
+  } catch (error) {
+    console.error('[Service Worker] Erro ao invalidar cache HTML:', error);
+  }
 }
 
 // ---------------------------------------------
