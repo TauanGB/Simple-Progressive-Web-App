@@ -222,7 +222,7 @@
             // Criar formulário para aplicar sugestões
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{% url "core:criar_plano_dia" %}';
+            form.action = '{% url "core:criar_tarefa_hoje" %}';
             
             const csrf = document.createElement('input');
             csrf.type = 'hidden';

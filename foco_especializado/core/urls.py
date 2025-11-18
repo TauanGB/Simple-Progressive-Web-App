@@ -8,7 +8,6 @@ app_name = 'core'
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('criar-plano/', views.criar_plano_dia, name='criar_plano_dia'),
     path('tarefas/nova/', views.criar_tarefa_hoje, name='criar_tarefa_hoje'),
     path('tarefas/nova/amanha/', views.criar_tarefa_amanha, name='criar_tarefa_amanha'),
     path('tarefa/<int:task_id>/editar/', views.editar_tarefa, name='editar_tarefa'),

@@ -229,13 +229,9 @@
                         </a>
                         <a href="{% url 'core:criar_tarefa_amanha' %}" class="btn-icon-text btn-icon-secondary">
                             <i class="fas fa-calendar-plus"></i>
-                            <span>Adicionar para Amanhã</span>
+                            <span>Criar Tarefa de Amanhã</span>
                         </a>
                     {% endif %}
-                    <a href="{% url 'core:revisao_dia' %}" class="btn-icon-text" style="background-color: #7C3AED; color: white; border-color: #7C3AED;">
-                        <i class="fas fa-edit"></i>
-                        <span>Revisar meu dia</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -339,12 +335,21 @@
         
         // Atualiza contadores do dia (se disponível)
         if (data.tarefas_concluidas !== undefined && data.total_tarefas !== undefined) {
-            // Pode atualizar o card de progresso do dia se necessário
-            // Por enquanto, vamos recarregar apenas o card de progresso do dia
-            const progressCard = document.querySelector('.card:has(.card-title:contains("Progresso de Hoje"))');
+            // Buscar o card de progresso do dia de forma compatível
+            // Procura por todos os cards e verifica se contém o título "Progresso de Hoje"
+            const cards = document.querySelectorAll('.card');
+            let progressCard = null;
+            for (let card of cards) {
+                const cardTitle = card.querySelector('.card-title');
+                if (cardTitle && cardTitle.textContent.includes('Progresso de Hoje')) {
+                    progressCard = card;
+                    break;
+                }
+            }
+            
+            // Se encontrou o card de progresso, recarrega a página após um pequeno delay
+            // para atualizar os contadores do dia
             if (progressCard) {
-                // Recarrega apenas o card de progresso ou toda a página
-                // Por simplicidade, vamos recarregar a página após um pequeno delay
                 setTimeout(() => {
                     location.reload();
                 }, 500);
