@@ -50,86 +50,7 @@ def home(request):
     
     except DayPlan.DoesNotExist:
         # Não existe plano para hoje, redireciona para criação
-        return redirect('core:criar_plano_dia')
-
-
-@login_required
-def criar_plano_dia(request):
-    """
-    Cria o plano do dia com tarefas.
-    
-    Fluxo guiado:
-    1. Primeira tarefa importante
-    2. Segunda tarefa importante
-    3. Pergunta se quer adicionar terceira
-    
-    Agora permite programar tarefas para dias específicos.
-    
-    NOTA: Esta view está sendo mantida para compatibilidade, mas o fluxo principal
-    agora usa criar_tarefa_hoje() e criar_tarefa_amanha().
-    """
-    hoje = timezone.now().date()
-    
-    # Verifica se já existe plano para hoje
-    day_plan, created = DayPlan.objects.get_or_create(
-        usuario=request.user,
-        data=hoje
-    )
-    
-    # Se já tem 3 tarefas, redireciona para home
-    if day_plan.tasks.count() >= 3:
-        return redirect('core:home')
-    
-    # Quantidade de tarefas já criadas
-    tarefas_existentes = day_plan.tasks.count()
-    
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            # Obter a data escolhida pelo usuário (ou usar hoje como padrão)
-            data_escolhida = form.cleaned_data.get('data_da_tarefa') or hoje
-            
-            # Obter ou criar DayPlan para a data escolhida
-            day_plan_destino, _ = obter_ou_criar_day_plan(
-                request.user,
-                data_escolhida
-            )
-            
-            # Verificar se o DayPlan de destino já tem 3 tarefas
-            if day_plan_destino.tasks.count() >= 3:
-                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia ou edite as tarefas existentes.')
-                return redirect('core:criar_plano_dia')
-            
-            # Criar a tarefa
-            task = form.save(commit=False)
-            task.day_plan = day_plan_destino
-            # Determinar ordem (próxima disponível no DayPlan de destino)
-            tarefas_destino = day_plan_destino.tasks.count()
-            task.ordem = min(tarefas_destino + 1, 3)
-            task.save()
-            
-            # Mensagem de sucesso indicando a data
-            if data_escolhida == hoje:
-                messages.success(request, f'Tarefa {task.ordem} criada para hoje!')
-            else:
-                messages.success(request, f'Tarefa {task.ordem} criada para {data_escolhida.strftime("%d/%m/%Y")}!')
-            
-            # Se ainda não tem 3 tarefas no plano de hoje, continua o fluxo
-            if day_plan.tasks.count() < 3:
-                return redirect('core:criar_plano_dia')
-            else:
-                return redirect('core:home')
-    else:
-        form = TaskForm()
-    
-    context = {
-        'day_plan': day_plan,
-        'form': form,
-        'tarefas_existentes': tarefas_existentes,
-        'proxima_ordem': tarefas_existentes + 1,
-        'hoje': hoje,
-    }
-    return render(request, 'core/criar_plano_dia.html', context)
+        return redirect('core:criar_tarefa_hoje')
 
 
 @login_required
@@ -571,7 +492,7 @@ def aplicar_sugestoes_ia(request):
         
         if not sugestoes_ids:
             messages.error(request, 'Nenhuma sugestão selecionada.')
-            return redirect('core:criar_plano_dia')
+            return redirect('core:criar_tarefa_hoje')
         
         # Conta tarefas existentes
         tarefas_existentes = day_plan.tasks.count()
@@ -597,7 +518,7 @@ def aplicar_sugestoes_ia(request):
         messages.success(request, 'Tarefas criadas a partir das sugestões!')
         return redirect('core:home')
     
-    return redirect('core:criar_plano_dia')
+    return redirect('core:criar_tarefa_hoje')
 
 
 @login_required
