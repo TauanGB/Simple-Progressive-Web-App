@@ -16,10 +16,10 @@ from django.utils import timezone
 from django.conf import settings
 from django import forms
 
-from .models import DayPlan, Task
+from .models import DayPlan, Task, TaskMoment
 from .ai_service import sugerir_tarefas_por_ia
-from .forms import DayPlanForm, TaskForm, RevisaoDiaForm
-from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia
+from .forms import DayPlanForm, TaskForm, RevisaoDiaForm, TaskMomentForm
+from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia, get_current_date, get_current_datetime
 
 
 @login_required
@@ -29,7 +29,7 @@ def home(request):
     
     Se não existir plano para hoje, redireciona para criação.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     
     try:
         day_plan = DayPlan.objects.get(usuario=request.user, data=hoje)
@@ -38,6 +38,26 @@ def home(request):
         # Calcular streak
         streak = day_plan.get_streak()
         
+        # Calcular tarefas pendentes de hoje
+        tarefas_pendentes_hoje = day_plan.tasks.filter(status='pendente').count()
+        pode_adicionar_hoje = tarefas_pendentes_hoje < 3 or day_plan.tarefas_concluidas > 0
+        
+        # Verificar plano de amanhã
+        from datetime import timedelta
+        amanha = hoje + timedelta(days=1)
+        try:
+            day_plan_amanha = DayPlan.objects.get(usuario=request.user, data=amanha)
+            tarefas_pendentes_amanha = day_plan_amanha.tasks.filter(status='pendente').count()
+            # Para amanhã: só pode adicionar se tiver menos de 3 tarefas pendentes
+            # (não permite adicionar mesmo que haja tarefas concluídas)
+            pode_adicionar_amanha = tarefas_pendentes_amanha < 3
+            total_tarefas_amanha = day_plan_amanha.total_tarefas
+        except DayPlan.DoesNotExist:
+            day_plan_amanha = None
+            tarefas_pendentes_amanha = 0
+            pode_adicionar_amanha = True
+            total_tarefas_amanha = 0
+        
         context = {
             'day_plan': day_plan,
             'tasks': tasks,
@@ -45,6 +65,11 @@ def home(request):
             'streak': streak,
             'total_tarefas': day_plan.total_tarefas,
             'tarefas_concluidas': day_plan.tarefas_concluidas,
+            'tarefas_pendentes_hoje': tarefas_pendentes_hoje,
+            'pode_adicionar_hoje': pode_adicionar_hoje,
+            'tarefas_pendentes_amanha': tarefas_pendentes_amanha,
+            'pode_adicionar_amanha': pode_adicionar_amanha,
+            'total_tarefas_amanha': total_tarefas_amanha,
         }
         return render(request, 'core/home.html', context)
     
@@ -66,7 +91,7 @@ def criar_tarefa_hoje(request):
     - Mostra campo de seleção de data
     - Permite escolher qualquer data (padrão: amanhã)
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     from datetime import timedelta
     
     # Verifica se já existe plano para hoje
@@ -75,9 +100,12 @@ def criar_tarefa_hoje(request):
         data=hoje
     )
     
-    # Se já tem 3 tarefas, redireciona para home
-    if day_plan.tasks.count() >= 3:
-        messages.info(request, 'Você já tem 3 tarefas para hoje. Use a opção de agendar para criar tarefas em outros dias.')
+    # Conta tarefas pendentes (não concluídas)
+    tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
+    
+    # Se já tem 3 tarefas pendentes e não há tarefas concluídas, redireciona para home
+    if tarefas_pendentes >= 3 and day_plan.tarefas_concluidas == 0:
+        messages.info(request, 'Você já tem 3 tarefas pendentes para hoje. Conclua algumas tarefas ou use a opção de agendar para criar tarefas em outros dias.')
         return redirect('core:home')
     
     if request.method == 'POST':
@@ -99,9 +127,12 @@ def criar_tarefa_hoje(request):
                 data_escolhida
             )
             
-            # Verificar se o DayPlan de destino já tem 3 tarefas
-            if day_plan_destino.tasks.count() >= 3:
-                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia.')
+            # Conta tarefas pendentes no destino
+            tarefas_pendentes_destino = day_plan_destino.tasks.filter(status='pendente').count()
+            
+            # Verificar se o DayPlan de destino já tem 3 tarefas pendentes e não há tarefas concluídas
+            if tarefas_pendentes_destino >= 3 and day_plan_destino.tarefas_concluidas == 0:
+                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas pendentes. Conclua algumas tarefas ou escolha outro dia.')
                 context = {
                     'form': form,
                     'day_plan': day_plan,
@@ -146,7 +177,7 @@ def criar_tarefa_amanha(request):
     
     Não exibe calendário, sempre cria para o dia seguinte.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     from datetime import timedelta
     amanha = hoje + timedelta(days=1)
     
@@ -156,9 +187,13 @@ def criar_tarefa_amanha(request):
         data=amanha
     )
     
-    # Verificar se já tem 3 tarefas
-    if day_plan.tasks.count() >= 3:
-        messages.error(request, 'Você já tem 3 tarefas para amanhã. Edite ou exclua uma tarefa existente.')
+    # Conta tarefas pendentes (não concluídas)
+    tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
+    
+    # Para amanhã: não permite adicionar se já tiver 3 tarefas pendentes
+    # (mesmo que haja tarefas concluídas, não pode adicionar mais)
+    if tarefas_pendentes >= 3:
+        messages.error(request, 'Você já tem 3 tarefas pendentes para amanhã. Conclua ou remova algumas tarefas antes de adicionar mais.')
         return redirect('core:home')
     
     if request.method == 'POST':
@@ -214,9 +249,13 @@ def editar_tarefa(request, task_id):
                     nova_data
                 )
                 
-                # Verificar se o DayPlan de destino já tem 3 tarefas
-                if day_plan_destino.tasks.count() >= 3:
-                    messages.error(request, f'O dia {nova_data.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia.')
+                # Conta tarefas pendentes no destino (excluindo a tarefa atual se ela já estiver no destino)
+                tarefas_pendentes_destino = day_plan_destino.tasks.filter(status='pendente').exclude(id=task.id).count()
+                
+                # Verificar se o DayPlan de destino já tem 3 tarefas pendentes e não há tarefas concluídas
+                # (se a tarefa atual já está no destino e é pendente, não conta ela)
+                if tarefas_pendentes_destino >= 3 and day_plan_destino.tarefas_concluidas == 0:
+                    messages.error(request, f'O dia {nova_data.strftime("%d/%m/%Y")} já possui 3 tarefas pendentes. Conclua algumas tarefas ou escolha outro dia.')
                     context = {
                         'form': form,
                         'task': task,
@@ -347,7 +386,7 @@ def concluir_tarefa(request, task_id):
     """
     Conclui uma tarefa (botão B).
     
-    Retorna JSON para requisições AJAX.
+    Retorna JSON para requisições AJAX ou redireciona para registro de conquista.
     """
     task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
     
@@ -357,6 +396,7 @@ def concluir_tarefa(request, task_id):
     day_plan.refresh_from_db()
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Para requisições AJAX, retorna JSON e inclui link para registrar conquista
         return JsonResponse({
             'success': True,
             'progress_percent': task.progress_percent,
@@ -365,10 +405,12 @@ def concluir_tarefa(request, task_id):
             'status': task.status,
             'tarefas_concluidas': day_plan.tarefas_concluidas,
             'total_tarefas': day_plan.total_tarefas,
+            'registrar_conquista_url': f'/tarefa/{task.id}/registrar-conquista/?from_complete=1',
         })
     
-    messages.success(request, 'Tarefa concluída!')
-    return redirect('core:home')
+    # Para requisições normais, redireciona para página de registro de conquista
+    messages.success(request, 'Tarefa concluída! Agora você pode registrar uma conquista.')
+    return redirect('core:registrar_conquista', task_id=task.id)
 
 
 @login_required
@@ -479,7 +521,7 @@ def aplicar_sugestoes_ia(request):
     """
     Aplica as sugestões de IA criando tarefas no plano do dia.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     
     day_plan, created = DayPlan.objects.get_or_create(
         usuario=request.user,
@@ -494,8 +536,19 @@ def aplicar_sugestoes_ia(request):
             messages.error(request, 'Nenhuma sugestão selecionada.')
             return redirect('core:criar_tarefa_hoje')
         
-        # Conta tarefas existentes
+        # Conta tarefas existentes e pendentes
         tarefas_existentes = day_plan.tasks.count()
+        tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
+        
+        # Determina quantas tarefas podem ser criadas
+        # Se há tarefas concluídas, pode criar além das 3
+        # Caso contrário, limita a 3 tarefas pendentes
+        if day_plan.tarefas_concluidas > 0:
+            # Se há tarefas concluídas, pode criar quantas quiser (sem limite rígido)
+            limite_criacao = None
+        else:
+            # Se não há tarefas concluídas, limita a 3 tarefas pendentes
+            limite_criacao = 3
         
         # Cria tarefas a partir das sugestões
         # Por simplicidade, vamos receber os dados via JSON ou form
@@ -506,7 +559,12 @@ def aplicar_sugestoes_ia(request):
         descricoes = request.POST.getlist('descricao')
         
         for i, titulo in enumerate(titulos):
-            if titulo.strip() and (tarefas_existentes + i + 1) <= 3:
+            # Verifica se pode criar mais tarefas
+            pode_criar = True
+            if limite_criacao is not None:
+                pode_criar = (tarefas_pendentes + i) < limite_criacao
+            
+            if titulo.strip() and pode_criar:
                 Task.objects.create(
                     day_plan=day_plan,
                     titulo=titulo.strip(),
@@ -522,34 +580,102 @@ def aplicar_sugestoes_ia(request):
 
 
 @login_required
-def historico(request):
-    """Lista o histórico de dias anteriores."""
+def resultados(request):
+    """Dashboard de resultados com métricas dos últimos 30 dias."""
+    hoje = get_current_date()
+    data_inicio = hoje - timedelta(days=30)
+    
+    # Buscar planos dos últimos 30 dias
     day_plans = DayPlan.objects.filter(
-        usuario=request.user
-    ).order_by('-data')[:30]  # Últimos 30 dias
+        usuario=request.user,
+        data__gte=data_inicio,
+        data__lte=hoje
+    ).order_by('-data')
+    
+    # Calcular métricas
+    todas_tarefas = Task.objects.filter(
+        day_plan__usuario=request.user,
+        day_plan__data__gte=data_inicio,
+        day_plan__data__lte=hoje
+    )
+    
+    tarefas_nao_concluidas = todas_tarefas.filter(status='pendente').count()
+    tarefas_progresso_parcial = todas_tarefas.filter(
+        status='pendente',
+        progress_percent__gt=0
+    ).count()
+    
+    tarefas_concluidas_total = todas_tarefas.filter(status='concluida').count()
+    dias_com_atividade = day_plans.filter(tasks__isnull=False).distinct().count()
+    media_tarefas_dia = tarefas_concluidas_total / dias_com_atividade if dias_com_atividade > 0 else 0
+    
+    # Dados para gráficos (evolução diária) - ordenar por data crescente para o gráfico
+    dados_grafico = []
+    day_plans_ordenados = day_plans.order_by('data')  # Ordenar por data crescente para gráfico
+    for plan in day_plans_ordenados:
+        dados_grafico.append({
+            'data': plan.data.strftime('%Y-%m-%d'),
+            'data_formatada': plan.data.strftime('%d/%m'),
+            'concluidas': plan.tarefas_concluidas,
+            'total': plan.total_tarefas,
+            'percentual': plan.percentual_conclusao
+        })
+    
+    # Dados para gráfico de distribuição
+    total_tarefas = todas_tarefas.count()
+    tarefas_concluidas_count = todas_tarefas.filter(status='concluida').count()
+    tarefas_pendentes_sem_progresso = todas_tarefas.filter(
+        status='pendente',
+        progress_percent=0
+    ).count()
     
     # Calcular streak atual
-    hoje = timezone.now().date()
     try:
         day_plan_hoje = DayPlan.objects.get(usuario=request.user, data=hoje)
         streak = day_plan_hoje.get_streak()
     except DayPlan.DoesNotExist:
         streak = 0
     
-    # Adicionar informações de progresso médio para cada plano
-    for plan in day_plans:
+    # Buscar planos para a lista de detalhes (incluindo amanhã, últimos 7 dias)
+    # 7 dias: amanhã, hoje, e 5 dias anteriores = 7 dias no total
+    amanha = hoje + timedelta(days=1)
+    data_inicio_lista = hoje - timedelta(days=5)  # 5 dias atrás + hoje + amanhã = 7 dias
+    day_plans_lista = DayPlan.objects.filter(
+        usuario=request.user,
+        data__gte=data_inicio_lista,
+        data__lte=amanha
+    ).order_by('-data')
+    
+    # Adicionar informações de progresso médio e conquistas para cada plano (apenas os que serão exibidos)
+    for plan in day_plans_lista:
         tasks = plan.tasks.all()
         if tasks.exists():
             total_progress = sum(task.progress_percent for task in tasks)
             plan.progresso_medio = int(total_progress / tasks.count())
+            
+            # Conta total de conquistas do plano
+            total_moments = TaskMoment.objects.filter(task__day_plan=plan).count()
+            plan.total_conquistas = total_moments
         else:
             plan.progresso_medio = 0
+            plan.total_conquistas = 0
+        
+        # Marcar se o dia é anterior a hoje (para status diferente)
+        plan.eh_dia_passado = plan.data < hoje
     
     context = {
-        'day_plans': day_plans,
+        'day_plans': day_plans_lista,
         'streak': streak,
+        'tarefas_nao_concluidas': tarefas_nao_concluidas,
+        'tarefas_progresso_parcial': tarefas_progresso_parcial,
+        'media_tarefas_dia': round(media_tarefas_dia, 1),
+        'dados_grafico': json.dumps(dados_grafico),
+        'tarefas_concluidas_total': tarefas_concluidas_total,
+        'total_tarefas': total_tarefas,
+        'tarefas_concluidas_count': tarefas_concluidas_count,
+        'tarefas_pendentes_sem_progresso': tarefas_pendentes_sem_progresso,
     }
-    return render(request, 'core/historico.html', context)
+    return render(request, 'core/resultados.html', context)
 
 
 @login_required
@@ -563,7 +689,7 @@ def detalhes_dia(request, data_str):
         data_obj = date.fromisoformat(data_str)
     except ValueError:
         messages.error(request, 'Data inválida.')
-        return redirect('core:historico')
+        return redirect('core:resultados')
     
     day_plan = get_object_or_404(
         DayPlan,
@@ -588,7 +714,7 @@ def revisao_dia(request):
     
     Registra motivo de não conclusão e comentário/reflexão.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     
     try:
         day_plan = DayPlan.objects.get(usuario=request.user, data=hoje)
@@ -733,3 +859,69 @@ def pwa_debug(request):
 
 def healthz(request):
     return JsonResponse({"status": "ok"})
+
+
+def chrome_devtools_config(request):
+    """
+    Retorna uma resposta vazia para o arquivo de configuração do Chrome DevTools.
+    
+    O Chrome DevTools tenta acessar este arquivo para configurações específicas
+    de PWA. Como não é necessário para o funcionamento da aplicação, retornamos
+    um JSON vazio para evitar warnings 404 no log.
+    """
+    return JsonResponse({}, status=200)
+
+
+@login_required
+def registrar_conquista(request, task_id):
+    """
+    Registra uma conquista/momento para uma tarefa.
+    
+    Pode ser acessado após concluir uma tarefa ou diretamente
+    para adicionar uma conquista a uma tarefa já concluída.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    if request.method == 'POST':
+        form = TaskMomentForm(request.POST, request.FILES)
+        if form.is_valid():
+            task_moment = form.save(commit=False)
+            task_moment.task = task
+            task_moment.save()
+            
+            messages.success(request, 'Conquista registrada com sucesso! 🎉')
+            
+            # Verifica se veio de uma conclusão recente (parâmetro opcional)
+            if request.GET.get('from_complete') == '1':
+                return redirect('core:home')
+            else:
+                return redirect('core:detalhes_tarefa', task_id=task.id)
+        else:
+            messages.error(request, 'Erro ao registrar conquista. Verifique os dados e tente novamente.')
+    else:
+        form = TaskMomentForm()
+    
+    context = {
+        'form': form,
+        'task': task,
+        'day_plan': task.day_plan,
+    }
+    return render(request, 'core/registrar_conquista.html', context)
+
+
+@login_required
+def detalhes_tarefa(request, task_id):
+    """
+    Mostra os detalhes de uma tarefa, incluindo suas conquistas.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    # Busca todas as conquistas da tarefa (ordenadas por data, mais recentes primeiro)
+    moments = task.moments.all()
+    
+    context = {
+        'task': task,
+        'day_plan': task.day_plan,
+        'moments': moments,
+    }
+    return render(request, 'core/detalhes_tarefa.html', context)

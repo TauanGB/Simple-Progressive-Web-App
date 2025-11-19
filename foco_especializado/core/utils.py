@@ -2,7 +2,51 @@
 Funções utilitárias para o app de foco diário.
 """
 from django.utils import timezone
-from .models import DayPlan
+from datetime import datetime
+
+# ============================================================================
+# CONFIGURAÇÃO TEMPORÁRIA PARA TESTES
+# ============================================================================
+# Flag para usar horário local da máquina ao invés do timezone do Django
+# ATENÇÃO: Esta é uma configuração TEMPORÁRIA apenas para testes!
+# Para ativar: defina USE_LOCAL_TIME_FOR_TESTING = True
+# Para desativar: defina USE_LOCAL_TIME_FOR_TESTING = False
+USE_LOCAL_TIME_FOR_TESTING = False  # Usando timezone do Django (America/Sao_Paulo)
+# ============================================================================
+
+def get_current_date():
+    """
+    Retorna a data atual.
+    
+    Se USE_LOCAL_TIME_FOR_TESTING estiver True, usa o horário local da máquina.
+    Caso contrário, usa o timezone configurado no Django.
+    
+    Returns:
+        date: Data atual
+    """
+    if USE_LOCAL_TIME_FOR_TESTING:
+        # Usa horário local da máquina (sem timezone)
+        return datetime.now().date()
+    else:
+        # Usa timezone configurado no Django
+        return timezone.now().date()
+
+def get_current_datetime():
+    """
+    Retorna o datetime atual.
+    
+    Se USE_LOCAL_TIME_FOR_TESTING estiver True, usa o horário local da máquina.
+    Caso contrário, usa o timezone configurado no Django.
+    
+    Returns:
+        datetime: Datetime atual
+    """
+    if USE_LOCAL_TIME_FOR_TESTING:
+        # Usa horário local da máquina (sem timezone)
+        return datetime.now()
+    else:
+        # Usa timezone configurado no Django
+        return timezone.now()
 
 
 def obter_ou_criar_day_plan(usuario, data):
@@ -16,6 +60,9 @@ def obter_ou_criar_day_plan(usuario, data):
     Returns:
         Tupla (DayPlan, created) onde created é True se foi criado agora
     """
+    # Importação local para evitar importação circular
+    from .models import DayPlan
+    
     day_plan, created = DayPlan.objects.get_or_create(
         usuario=usuario,
         data=data
@@ -48,13 +95,16 @@ def clonar_tarefa_para_proximo_dia(task):
         data_proximo_dia
     )
     
+    # Conta tarefas pendentes (não concluídas) no próximo dia
+    tarefas_pendentes = day_plan_proximo.tasks.filter(status='pendente').count()
+    
     # Determinar a ordem da nova tarefa (próxima ordem disponível)
     tarefas_existentes = day_plan_proximo.tasks.count()
     nova_ordem = min(tarefas_existentes + 1, 3)  # Máximo 3 tarefas
     
-    # Se já tem 3 tarefas, não cria
-    if tarefas_existentes >= 3:
-        raise ValueError("O dia seguinte já possui 3 tarefas. Não é possível adicionar mais.")
+    # Se já tem 3 tarefas pendentes e não há tarefas concluídas, não cria
+    if tarefas_pendentes >= 3 and day_plan_proximo.tarefas_concluidas == 0:
+        raise ValueError("O dia seguinte já possui 3 tarefas pendentes. Conclua algumas tarefas antes de adicionar mais.")
     
     # Criar nova tarefa copiando campos relevantes
     nova_tarefa = Task.objects.create(

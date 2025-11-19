@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -37,6 +37,9 @@
     
     <!-- CSS Customizado - Estilos de App Mobile -->
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    
+    <!-- Script de Tema (carrega imediatamente para evitar flash de tema errado) -->
+    <script src="{% static 'js/theme.js' %}"></script>
     
     {% if PWA_SETTINGS.enabled %}
     <!-- Manifest PWA -->
@@ -93,6 +96,14 @@
     <header class="app-header">
         <h1>{% block header_title %}Hoje{% endblock %}</h1>
         {% block header_subtitle %}{% endblock %}
+        <div class="theme-toggle-container">
+            <button id="theme-toggle" class="theme-toggle" 
+                    aria-label="Alternar modo claro/escuro"
+                    title="Alternar modo claro/escuro">
+                <span class="icon-sun">☀️</span>
+                <span class="icon-moon">🌙</span>
+            </button>
+        </div>
     </header>
     {% endif %}
 
@@ -140,9 +151,9 @@
             <span class="nav-icon">📅</span>
             <span>Hoje</span>
         </a>
-        <a href="{% url 'core:historico' %}" class="{% if request.resolver_match.url_name == 'historico' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
+        <a href="{% url 'core:resultados' %}" class="{% if request.resolver_match.url_name == 'resultados' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
             <span class="nav-icon">📊</span>
-            <span>Histórico</span>
+            <span>Resultados</span>
         </a>
         <a href="{% url 'core:revisao_dia' %}" class="{% if request.resolver_match.url_name == 'revisao_dia' %}active{% endif %}">
             <span class="nav-icon">✍️</span>
@@ -195,6 +206,273 @@
             }
             lastTouchEnd = now;
         }, false);
+    </script>
+    
+    <!-- 
+        ============================================
+        VERIFICAÇÃO DE MUDANÇA DE DIA
+        ============================================
+        Verifica automaticamente se o dia mudou e
+        força atualização quando necessário.
+    -->
+    <script>
+        (function() {
+            'use strict';
+            
+            const STORAGE_KEY_LAST_DAY = 'app_last_verified_day';
+            const STORAGE_KEY_LAST_CHECK = 'app_last_day_check';
+            const STORAGE_KEY_OPERATION_IN_PROGRESS = 'app_operation_in_progress';
+            const CHECK_INTERVAL_MS = 60000; // Verificar a cada 1 minuto
+            const OPERATION_PROTECTION_DELAY_MS = 3000; // Aguardar 3 segundos se houver operação em andamento
+            
+            /**
+             * Obtém a data atual no formato YYYY-MM-DD no timezone do servidor (America/Sao_Paulo)
+             */
+            function getCurrentDateString() {
+                const now = new Date();
+                // Usa Intl.DateTimeFormat para obter a data no timezone do servidor (America/Sao_Paulo)
+                const formatter = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'America/Sao_Paulo',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                // Retorna no formato YYYY-MM-DD
+                return formatter.format(now);
+            }
+            
+            /**
+             * Obtém o último dia verificado do localStorage
+             */
+            function getLastVerifiedDay() {
+                return localStorage.getItem(STORAGE_KEY_LAST_DAY);
+            }
+            
+            /**
+             * Verifica se há operação em andamento
+             */
+            function isOperationInProgress() {
+                const operationFlag = localStorage.getItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
+                if (!operationFlag) {
+                    return false;
+                }
+                
+                // Verifica se a flag ainda é válida (não expirou)
+                const timestamp = parseInt(operationFlag, 10);
+                const now = Date.now();
+                const maxAge = 30000; // 30 segundos
+                
+                if (isNaN(timestamp) || (now - timestamp) > maxAge) {
+                    // Flag expirou, limpa
+                    localStorage.removeItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            /**
+             * Verifica se há formulários sendo submetidos
+             */
+            function hasFormSubmitting() {
+                // Verifica se há formulários com dados sendo submetidos
+                const forms = document.querySelectorAll('form');
+                for (let form of forms) {
+                    // Verifica se o formulário tem um botão submit que está desabilitado
+                    // (indicando que está sendo processado)
+                    const submitButton = form.querySelector('button[type="submit"]:disabled, input[type="submit"]:disabled');
+                    if (submitButton) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            /**
+             * Salva o dia atual no localStorage
+             */
+            function saveCurrentDay() {
+                const today = getCurrentDateString();
+                localStorage.setItem(STORAGE_KEY_LAST_DAY, today);
+                localStorage.setItem(STORAGE_KEY_LAST_CHECK, Date.now().toString());
+            }
+            
+            /**
+             * Verifica se o dia mudou
+             */
+            function checkDayChange() {
+                const currentDay = getCurrentDateString();
+                const lastVerifiedDay = getLastVerifiedDay();
+                
+                // Se não há dia salvo, salva o dia atual e retorna
+                if (!lastVerifiedDay) {
+                    saveCurrentDay();
+                    return false;
+                }
+                
+                // Se o dia mudou, força recarregamento
+                if (currentDay !== lastVerifiedDay) {
+                    console.log('[Day Sync] Dia mudou de', lastVerifiedDay, 'para', currentDay);
+                    
+                    // Verifica se há operação em andamento ou formulário sendo submetido
+                    if (isOperationInProgress() || hasFormSubmitting()) {
+                        console.log('[Day Sync] Operação em andamento detectada, aguardando antes de recarregar...');
+                        
+                        // Aguarda um tempo antes de tentar recarregar novamente
+                        setTimeout(function() {
+                            // Verifica novamente se ainda há operação em andamento
+                            if (!isOperationInProgress() && !hasFormSubmitting()) {
+                                console.log('[Day Sync] Operação concluída, recarregando página...');
+                                performDayChangeReload(currentDay);
+                            } else {
+                                // Se ainda há operação, agenda nova tentativa
+                                console.log('[Day Sync] Operação ainda em andamento, tentando novamente em', OPERATION_PROTECTION_DELAY_MS, 'ms');
+                                setTimeout(function() {
+                                    checkDayChange();
+                                }, OPERATION_PROTECTION_DELAY_MS);
+                            }
+                        }, OPERATION_PROTECTION_DELAY_MS);
+                        
+                        return true;
+                    }
+                    
+                    // Se não há operação em andamento, recarrega imediatamente
+                    performDayChangeReload(currentDay);
+                    return true;
+                }
+                
+                // Atualiza timestamp da última verificação
+                localStorage.setItem(STORAGE_KEY_LAST_CHECK, Date.now().toString());
+                return false;
+            }
+            
+            /**
+             * Executa o recarregamento quando o dia muda
+             */
+            function performDayChangeReload(currentDay) {
+                // Limpa cache relevante do localStorage (exceto configurações PWA e flag de operação)
+                const keysToKeep = [
+                    'pwa_install_dismissed',
+                    'pwa_installed',
+                    'pwa_ios_hint_dismissed',
+                    'pwa_first_boot_pending_toast',
+                    STORAGE_KEY_OPERATION_IN_PROGRESS // Mantém flag de operação temporariamente
+                ];
+                
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && !keysToKeep.includes(key) && key.startsWith('app_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                
+                // Salva o novo dia
+                saveCurrentDay();
+                
+                // Força recarregamento completo da página
+                // Usa window.location.reload(true) para forçar bypass do cache
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    // Se há service worker, envia mensagem para invalidar cache
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'DAY_CHANGED',
+                        newDay: currentDay
+                    });
+                }
+                
+                // Recarrega a página após um pequeno delay para garantir que a mensagem foi enviada
+                setTimeout(function() {
+                    window.location.reload(true);
+                }, 100);
+            }
+            
+            /**
+             * Calcula o tempo até a próxima meia-noite
+             */
+            function getMsUntilMidnight() {
+                const now = new Date();
+                const midnight = new Date(now);
+                midnight.setHours(24, 0, 0, 0);
+                return midnight.getTime() - now.getTime();
+            }
+            
+            /**
+             * Configura verificação periódica
+             */
+            function setupPeriodicCheck() {
+                // Verifica imediatamente ao carregar
+                checkDayChange();
+                
+                // Verifica periodicamente enquanto a página está ativa
+                let checkInterval = setInterval(function() {
+                    if (!document.hidden) {
+                        checkDayChange();
+                    }
+                }, CHECK_INTERVAL_MS);
+                
+                // Verifica quando a página volta ao foco
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        checkDayChange();
+                    }
+                });
+                
+                // Configura timer para verificar exatamente na meia-noite
+                const msUntilMidnight = getMsUntilMidnight();
+                setTimeout(function() {
+                    checkDayChange();
+                    // Após meia-noite, configura verificação a cada minuto por 1 hora
+                    // para garantir que detecta a mudança mesmo se o timer falhar
+                    const postMidnightInterval = setInterval(function() {
+                        if (checkDayChange()) {
+                            clearInterval(postMidnightInterval);
+                        }
+                        // Para após 1 hora (60 minutos)
+                        setTimeout(function() {
+                            clearInterval(postMidnightInterval);
+                        }, 60 * 60 * 1000);
+                    }, CHECK_INTERVAL_MS);
+                }, msUntilMidnight);
+            }
+            
+            // Inicializa quando o DOM estiver pronto
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupPeriodicCheck);
+            } else {
+                setupPeriodicCheck();
+            }
+            
+            // Monitora submissão de formulários para proteger contra recarregamento durante operações
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form && form.tagName === 'FORM') {
+                    // Marca que há operação em andamento
+                    localStorage.setItem(STORAGE_KEY_OPERATION_IN_PROGRESS, Date.now().toString());
+                    
+                    // Remove a flag após 10 segundos (tempo máximo esperado para uma operação)
+                    setTimeout(function() {
+                        localStorage.removeItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
+                    }, 10000);
+                }
+            });
+            
+            // Limpa flag de operação quando a página carrega (caso tenha ficado de uma sessão anterior)
+            window.addEventListener('load', function() {
+                // Aguarda 1 segundo antes de limpar, para dar tempo de operações assíncronas
+                setTimeout(function() {
+                    const operationFlag = localStorage.getItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
+                    if (operationFlag) {
+                        const timestamp = parseInt(operationFlag, 10);
+                        const now = Date.now();
+                        // Se a flag tem mais de 5 segundos, remove (provavelmente de sessão anterior)
+                        if (isNaN(timestamp) || (now - timestamp) > 5000) {
+                            localStorage.removeItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
+                        }
+                    }
+                }, 1000);
+            });
+        })();
     </script>
     {% block extra_js %}{% endblock %}
 </body>

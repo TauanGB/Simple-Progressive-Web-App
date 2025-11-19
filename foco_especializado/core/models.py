@@ -8,6 +8,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from .utils import get_current_date, get_current_datetime
 
 
 class DayPlan(models.Model):
@@ -85,7 +86,7 @@ class DayPlan(models.Model):
         pelo menos 1 tarefa concluída).
         """
         streak = 0
-        data_atual = timezone.now().date()
+        data_atual = get_current_date()
         
         # Verifica se hoje tem pelo menos 1 tarefa concluída
         if self.data == data_atual and self.tarefas_concluidas > 0:
@@ -203,12 +204,35 @@ class Task(models.Model):
         return f"{self.ordem}. {self.titulo} - {self.day_plan.data}"
     
     def save(self, *args, **kwargs):
-        """Sobrescreve save para calcular progresso automaticamente."""
-        # Se o progresso não foi definido ou se a tarefa não está concluída, recalcula
+        """
+        Sobrescreve save para calcular progresso automaticamente e garantir
+        que novas tarefas sempre tenham status 'pendente'.
+        """
+        # Se é uma nova tarefa (sem pk), garante que status seja 'pendente'
+        # a menos que explicitamente definido como 'concluida'
+        if not self.pk:
+            # Nova tarefa: garante status 'pendente' se não foi explicitamente definido
+            if not hasattr(self, '_status_explicitly_set') or not self._status_explicitly_set:
+                if self.status != 'concluida':
+                    self.status = 'pendente'
+                # Garante que concluida_em seja None para novas tarefas pendentes
+                if self.status == 'pendente':
+                    self.concluida_em = None
+        else:
+            # Tarefa existente: validação de integridade
+            # Se status mudou para 'pendente', limpa concluida_em
+            if self.status == 'pendente' and self.concluida_em:
+                self.concluida_em = None
+            # Se status é 'concluida' mas não tem concluida_em, define agora
+            if self.status == 'concluida' and not self.concluida_em:
+                self.concluida_em = get_current_datetime()
+        
+        # Calcula progresso automaticamente
         if self.status != 'concluida':
             self.progress_percent = self.calcular_progresso()
         elif self.status == 'concluida':
             self.progress_percent = 100
+        
         super().save(*args, **kwargs)
 
     def calcular_progresso(self):
@@ -278,7 +302,7 @@ class Task(models.Model):
             self.completed_steps = self.total_steps
         
         if not self.concluida_em:
-            self.concluida_em = timezone.now()
+            self.concluida_em = get_current_datetime()
         
         self.save()
         return True
@@ -299,3 +323,146 @@ class Task(models.Model):
             self.progress_percent = self.calcular_progresso()
         self.save()
 
+
+class TaskMoment(models.Model):
+    """
+    Momento/Conquista de uma tarefa.
+    
+    Representa uma imagem registrada como "conquista" quando o usuário
+    conclui uma tarefa ou deseja registrar um momento importante.
+    """
+    # Constantes para compressão de imagem
+    TAMANHO_MAX_UPLOAD_BYTES = 2 * 1024 * 1024  # 2MB
+    LADO_MAXIMO_PIXELS = 1920  # Largura/altura máxima em pixels
+    QUALIDADE_PADRAO_JPEG = 75  # Qualidade JPEG (0-100)
+    
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='moments',
+        verbose_name='Tarefa'
+    )
+    image = models.ImageField(
+        upload_to='task_moments/%Y/%m/%d/',
+        verbose_name='Imagem',
+        help_text='Imagem da conquista/momento da tarefa'
+    )
+    caption = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name='Legenda',
+        help_text='Legenda opcional para o momento'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
+    
+    class Meta:
+        verbose_name = 'Momento da Tarefa'
+        verbose_name_plural = 'Momentos das Tarefas'
+        ordering = ['-created_at']  # Mais recentes primeiro
+    
+    def __str__(self):
+        return f"Conquista de {self.task.titulo} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+    
+    def save(self, *args, **kwargs):
+        """
+        Sobrescreve save para comprimir/redimensionar imagens automaticamente.
+        
+        Se a imagem exceder o limite de tamanho ou dimensões, será
+        redimensionada e comprimida antes de salvar.
+        """
+        # Se tem imagem, processa a compressão
+        if self.image:
+            try:
+                from PIL import Image
+                from io import BytesIO
+                from django.core.files.uploadedfile import InMemoryUploadedFile
+                import sys
+                
+                # Abre a imagem com Pillow
+                img = Image.open(self.image)
+                
+                # Verifica se precisa processar
+                precisa_processar = False
+                
+                # Verifica tamanho do arquivo (se disponível)
+                if hasattr(self.image, 'size') and self.image.size:
+                    if self.image.size > self.TAMANHO_MAX_UPLOAD_BYTES:
+                        precisa_processar = True
+                
+                # Verifica dimensões
+                if img.width > self.LADO_MAXIMO_PIXELS or img.height > self.LADO_MAXIMO_PIXELS:
+                    precisa_processar = True
+                
+                if precisa_processar:
+                    # Calcula novas dimensões mantendo proporção
+                    if img.width > img.height:
+                        # Imagem horizontal
+                        if img.width > self.LADO_MAXIMO_PIXELS:
+                            ratio = self.LADO_MAXIMO_PIXELS / img.width
+                            new_width = self.LADO_MAXIMO_PIXELS
+                            new_height = int(img.height * ratio)
+                        else:
+                            new_width = img.width
+                            new_height = img.height
+                    else:
+                        # Imagem vertical ou quadrada
+                        if img.height > self.LADO_MAXIMO_PIXELS:
+                            ratio = self.LADO_MAXIMO_PIXELS / img.height
+                            new_height = self.LADO_MAXIMO_PIXELS
+                            new_width = int(img.width * ratio)
+                        else:
+                            new_width = img.width
+                            new_height = img.height
+                    
+                    # Redimensiona a imagem
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    
+                    # Converte para RGB se necessário (JPEG não suporta transparência)
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        # Cria fundo branco para imagens com transparência
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                        img = background
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+                    
+                    # Salva em memória com compressão
+                    output = BytesIO()
+                    img.save(
+                        output,
+                        format='JPEG',
+                        quality=self.QUALIDADE_PADRAO_JPEG,
+                        optimize=True
+                    )
+                    output.seek(0)
+                    
+                    # Substitui o arquivo original pela versão comprimida
+                    nome_arquivo = self.image.name.split('/')[-1]
+                    # Garante extensão .jpg
+                    if not nome_arquivo.lower().endswith('.jpg') and not nome_arquivo.lower().endswith('.jpeg'):
+                        nome_arquivo = nome_arquivo.rsplit('.', 1)[0] + '.jpg'
+                    
+                    self.image = InMemoryUploadedFile(
+                        output,
+                        'ImageField',
+                        nome_arquivo,
+                        'image/jpeg',
+                        sys.getsizeof(output),
+                        None
+                    )
+                    
+            except Exception as e:
+                # Se houver erro no processamento, loga mas não impede o salvamento
+                # A imagem será salva sem processamento
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f'Erro ao processar imagem do TaskMoment: {e}')
+        
+        # Chama o save original
+        super().save(*args, **kwargs)

@@ -1,0 +1,282 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Resultados - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Resultados{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">Últimos 30 dias</div>
+{% endblock %}
+
+{% block extra_head %}
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        DASHBOARD DE RESULTADOS - MOBILE-FIRST
+        ============================================
+        Dashboard com métricas e gráficos dos
+        últimos 30 dias.
+    -->
+
+    <!-- Card de Streak (se houver) -->
+    {% if streak > 0 %}
+    <div class="streak-card fade-in">
+        <div class="streak-number">🔥 {{ streak }}</div>
+        <div class="streak-label">
+            Streak atual: {{ streak }} dia{{ streak|pluralize }} seguido{{ streak|pluralize }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Cards de Métricas Principais -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <!-- Card: Tarefas Não Concluídas -->
+        <div class="card fade-in" style="text-align: center; padding: 1.5rem 1rem;">
+            <div style="font-size: 2rem; font-weight: 700; color: #EF4444; margin-bottom: 0.5rem;">
+                {{ tarefas_nao_concluidas }}
+            </div>
+            <div style="font-size: 0.875rem; color: #6B7280; font-weight: 500;">
+                Tarefas Não Concluídas
+            </div>
+        </div>
+
+        <!-- Card: Tarefas com Progresso Parcial -->
+        <div class="card fade-in" style="text-align: center; padding: 1.5rem 1rem;">
+            <div style="font-size: 2rem; font-weight: 700; color: #F59E0B; margin-bottom: 0.5rem;">
+                {{ tarefas_progresso_parcial }}
+            </div>
+            <div style="font-size: 0.875rem; color: #6B7280; font-weight: 500;">
+                Em Progresso
+            </div>
+        </div>
+
+        <!-- Card: Média de Tarefas por Dia -->
+        <div class="card fade-in" style="text-align: center; padding: 1.5rem 1rem;">
+            <div style="font-size: 2rem; font-weight: 700; color: #4F46E5; margin-bottom: 0.5rem;">
+                {{ media_tarefas_dia }}
+            </div>
+            <div style="font-size: 0.875rem; color: #6B7280; font-weight: 500;">
+                Média/Dia
+            </div>
+        </div>
+
+        <!-- Card: Total Concluídas -->
+        <div class="card fade-in" style="text-align: center; padding: 1.5rem 1rem;">
+            <div style="font-size: 2rem; font-weight: 700; color: #10B981; margin-bottom: 0.5rem;">
+                {{ tarefas_concluidas_total }}
+            </div>
+            <div style="font-size: 0.875rem; color: #6B7280; font-weight: 500;">
+                Total Concluídas
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Gráfico de Linha: Evolução Diária -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Evolução de Conclusão</h2>
+            </div>
+            <div class="card-body" style="padding: 1rem;">
+                <canvas id="graficoEvolucao" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfico de Pizza: Distribuição de Status -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Distribuição de Tarefas</h2>
+            </div>
+            <div class="card-body" style="padding: 1rem;">
+                <canvas id="graficoDistribuicao" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção: Detalhes por Dia -->
+    <div style="margin-top: 2rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin-bottom: 1rem;">
+            Detalhes por Dia
+        </h2>
+        
+        {% if day_plans %}
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for plan in day_plans %}
+                    <a href="{% url 'core:detalhes_dia' plan.data|date:'Y-m-d' %}" style="text-decoration: none; color: inherit;">
+                        <div class="card fade-in" style="cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-calendar-day" style="color: #6B7280; font-size: 0.875rem;"></i>
+                                        <h3 style="font-size: 1.125rem; font-weight: 600; margin: 0; color: #111827;">
+                                            {{ plan.data|date:"l, d \\d\\e F"|capfirst }}
+                                        </h3>
+                                    </div>
+                                    <p style="font-size: 0.875rem; color: #6B7280; margin: 0;">
+                                        {{ plan.tarefas_concluidas }} de {{ plan.total_tarefas }} tarefas concluídas
+                                    </p>
+                                    {% if plan.total_conquistas > 0 %}
+                                        <p style="font-size: 0.75rem; color: #4F46E5; margin-top: 0.25rem; margin-bottom: 0;">
+                                            <i class="fas fa-camera"></i> {{ plan.total_conquistas }} conquista{{ plan.total_conquistas|pluralize }}
+                                        </p>
+                                    {% endif %}
+                                    {% if plan.progresso_medio is not None %}
+                                    <p style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.25rem; margin-bottom: 0;">
+                                        Progresso médio: {{ plan.progresso_medio }}%
+                                    </p>
+                                    {% endif %}
+                                    <!-- Barra de progresso compacta -->
+                                    <div class="progress-bar-container" style="margin-top: 0.75rem; max-width: 200px;">
+                                        <div class="progress-bar {% if plan.percentual_conclusao == 100 %}success{% elif plan.percentual_conclusao > 0 %}warning{% endif %}" 
+                                             style="width: {{ plan.percentual_conclusao }}%"></div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #4F46E5; margin: 0;">
+                                        {{ plan.percentual_conclusao }}%
+                                    </div>
+                                    <span class="badge {% if plan.percentual_conclusao == 100 %}badge-success{% elif plan.percentual_conclusao > 0 and not plan.eh_dia_passado %}badge-warning{% elif plan.percentual_conclusao > 0 and plan.eh_dia_passado %}badge-warning{% elif plan.eh_dia_passado %}badge-secondary{% else %}badge-info{% endif %}" 
+                                          {% if plan.eh_dia_passado and plan.percentual_conclusao == 0 %}style="background-color: #E5E7EB; color: #6B7280;"{% endif %}>
+                                        {% if plan.percentual_conclusao == 100 %}
+                                            <i class="fas fa-check-circle"></i> Completo
+                                        {% elif plan.percentual_conclusao > 0 %}
+                                            {% if plan.eh_dia_passado %}
+                                                <i class="fas fa-exclamation-triangle"></i> Incompleto
+                                            {% else %}
+                                                <i class="fas fa-spinner"></i> Em progresso
+                                            {% endif %}
+                                        {% else %}
+                                            {% if plan.eh_dia_passado %}
+                                                <i class="fas fa-times-circle"></i> Não Realizada
+                                            {% else %}
+                                                <i class="fas fa-clock"></i> Pendente
+                                            {% endif %}
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-right" style="color: #9CA3AF; font-size: 0.875rem; margin-top: 0.25rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Estado vazio -->
+            <div class="card fade-in" style="text-align: center; padding: 3rem 1.5rem;">
+                <p style="color: #6B7280; margin-bottom: 1.5rem; font-size: 1rem;">
+                    Você ainda não tem dados para exibir.
+                </p>
+                <a href="{% url 'core:home' %}" class="btn-icon-text btn-icon-text-primary">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Voltar para Hoje</span>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Configuração dos gráficos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados do backend
+        const dadosGrafico = JSON.parse('{{ dados_grafico|escapejs }}') || [];
+        const tarefasConcluidas = {{ tarefas_concluidas_count|default:0 }};
+        const tarefasProgressoParcial = {{ tarefas_progresso_parcial|default:0 }};
+        const tarefasPendentesSemProgresso = {{ tarefas_pendentes_sem_progresso|default:0 }};
+
+        // Preparar dados para gráfico de evolução (já vêm ordenados por data crescente)
+        const labels = dadosGrafico.length > 0 ? dadosGrafico.map(d => d.data_formatada) : [];
+        const concluidas = dadosGrafico.length > 0 ? dadosGrafico.map(d => d.concluidas) : [];
+        const totais = dadosGrafico.length > 0 ? dadosGrafico.map(d => d.total) : [];
+
+        // Gráfico de Linha: Evolução Diária
+        const ctxEvolucao = document.getElementById('graficoEvolucao');
+        if (ctxEvolucao && labels.length > 0) {
+            new Chart(ctxEvolucao, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tarefas Concluídas',
+                        data: concluidas,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Total de Tarefas',
+                        data: totais,
+                        borderColor: '#6B7280',
+                        backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de Pizza: Distribuição de Status
+        const ctxDistribuicao = document.getElementById('graficoDistribuicao');
+        if (ctxDistribuicao && (tarefasConcluidas > 0 || tarefasProgressoParcial > 0 || tarefasPendentesSemProgresso > 0)) {
+            new Chart(ctxDistribuicao, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Concluídas', 'Em Progresso', 'Pendentes'],
+                    datasets: [{
+                        data: [
+                            tarefasConcluidas,
+                            tarefasProgressoParcial,
+                            tarefasPendentesSemProgresso
+                        ],
+                        backgroundColor: [
+                            '#10B981',
+                            '#F59E0B',
+                            '#EF4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+

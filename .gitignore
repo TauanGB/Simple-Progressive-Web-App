@@ -153,3 +153,4 @@ htmlcov/
 coverage.xml
 *.cover
 
+foco_especializado/foco_especializado/db.sqlite3

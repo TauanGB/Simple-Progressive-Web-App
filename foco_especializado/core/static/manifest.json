@@ -55,10 +55,10 @@
       ]
     },
     {
-      "name": "Histórico",
-      "short_name": "Histórico",
-      "description": "Ver histórico de dias",
-      "url": "/historico/",
+      "name": "Resultados",
+      "short_name": "Resultados",
+      "description": "Ver resultados e métricas",
+      "url": "/resultados/",
       "icons": [
         {
           "src": "/static/icon-192.png",

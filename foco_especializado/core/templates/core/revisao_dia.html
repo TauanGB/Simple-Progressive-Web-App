@@ -26,49 +26,46 @@
             </div>
         </div>
         <div class="card-body" style="padding-top: 0;">
-            <form method="post" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <form method="post" class="flex-col-gap">
                 {% csrf_token %}
                 
                 <div>
-                    <label for="{{ form.motivo_opcao.id_for_label }}" 
-                           style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                    <label for="{{ form.motivo_opcao.id_for_label }}" class="form-label">
                         Motivo de não conclusão (se aplicável)
                     </label>
                     {{ form.motivo_opcao }}
                     {% if form.motivo_opcao.errors %}
-                        <p style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.motivo_opcao.errors }}</p>
+                        <p class="form-error-text">{{ form.motivo_opcao.errors }}</p>
                     {% endif %}
                 </div>
 
                 <div>
-                    <label for="{{ form.motivo_nao_conclusao.id_for_label }}" 
-                           style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                    <label for="{{ form.motivo_nao_conclusao.id_for_label }}" class="form-label">
                         {{ form.motivo_nao_conclusao.label }}
                     </label>
                     {{ form.motivo_nao_conclusao }}
                     {% if form.motivo_nao_conclusao.errors %}
-                        <p style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.motivo_nao_conclusao.errors }}</p>
+                        <p class="form-error-text">{{ form.motivo_nao_conclusao.errors }}</p>
                     {% endif %}
-                    <p style="color: #6B7280; font-size: 0.75rem; margin-top: 0.5rem;">
+                    <p class="form-help-text" style="font-size: 0.75rem;">
                         Descreva com mais detalhes, se necessário
                     </p>
                 </div>
 
                 <div>
-                    <label for="{{ form.comentario_reflexao.id_for_label }}" 
-                           style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                    <label for="{{ form.comentario_reflexao.id_for_label }}" class="form-label">
                         {{ form.comentario_reflexao.label }}
                     </label>
                     {{ form.comentario_reflexao }}
                     {% if form.comentario_reflexao.errors %}
-                        <p style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.comentario_reflexao.errors }}</p>
+                        <p class="form-error-text">{{ form.comentario_reflexao.errors }}</p>
                     {% endif %}
-                    <p style="color: #6B7280; font-size: 0.75rem; margin-top: 0.5rem;">
+                    <p class="form-help-text" style="font-size: 0.75rem;">
                         Como foi o dia? O que funcionou? O que pode melhorar?
                     </p>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                <div class="flex-col" style="gap: 0.75rem; margin-top: 1rem;">
                     <button type="submit" class="btn-icon-text btn-icon-text-primary btn-block">
                         <i class="fas fa-save"></i>
                         <span>Salvar Revisão</span>

@@ -43,7 +43,7 @@
                 </div>
                 
                 <!-- Mensagem motivacional condicional -->
-                <p style="margin-top: 1rem; font-size: 0.875rem; color: #6B7280;">
+                <p style="margin-top: 1rem; font-size: 0.875rem;" class="text-muted">
                     {% if tarefas_concluidas == 0 %}
                         💪 Vamos começar com algo pequeno?
                     {% elif tarefas_concluidas < total_tarefas %}
@@ -79,13 +79,26 @@
             de tocar e interagir em mobile.
         -->
         <div class="card fade-in">
-            <div class="card-header">
-                <h2 class="card-title">Tarefas de Foco</h2>
-                <div class="card-subtitle">Até 3 tarefas importantes por dia</div>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title">Tarefas de Foco</h2>
+                    <div class="card-subtitle">Até 3 tarefas importantes por dia</div>
+                </div>
+                <button type="button" 
+                        id="toggle-filtro-tarefas" 
+                        class="btn btn-sm btn-secondary"
+                        style="display: inline-flex; align-items: center; gap: 0.5rem;"
+                        onclick="toggleFiltroTarefas()"
+                        title="Mostrar/ocultar tarefas concluídas">
+                    <i class="fas fa-filter" id="filtro-icon"></i>
+                    <span id="filtro-texto">Mostrar concluídas</span>
+                </button>
             </div>
             <div class="card-body" style="padding-top: 0;">
                 {% for task in tasks %}
-                    <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                    <div class="task-card {% if task.status == 'concluida' %}completed task-concluida{% endif %}" 
+                         data-task-id="{{ task.id }}"
+                         data-task-status="{{ task.status }}">
                         <div class="task-header">
                             <span class="task-number">{{ task.ordem }}</span>
                             <div class="task-content" style="flex: 1;">
@@ -101,7 +114,7 @@
                                              style="width: {{ task.progress_percent }}%" 
                                              data-progress="{{ task.progress_percent }}"></div>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #6B7280;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem;" class="text-muted">
                                         <span class="task-progress-text">
                                             {% if task.total_steps and task.total_steps > 0 %}
                                                 Etapas: {{ task.completed_steps }}/{{ task.total_steps }}
@@ -116,6 +129,11 @@
                                 {% if task.status == 'concluida' and task.concluida_em %}
                                     <p class="task-meta">
                                         ✓ Concluída às {{ task.concluida_em|date:"H:i" }}
+                                        {% if task.moments.exists %}
+                                            | <a href="{% url 'core:detalhes_tarefa' task.id %}" style="color: #4F46E5; text-decoration: none;">
+                                                <i class="fas fa-camera"></i> {{ task.moments.count }} conquista{{ task.moments.count|pluralize }}
+                                            </a>
+                                        {% endif %}
                                     </p>
                                 {% endif %}
                             </div>
@@ -200,7 +218,7 @@
                     </div>
                 {% empty %}
                     <div style="text-align: center; padding: 2rem 0;">
-                        <p style="color: #6B7280; margin-bottom: 1rem;">Você ainda não tem tarefas para hoje.</p>
+                        <p style="margin-bottom: 1rem;" class="text-muted">Você ainda não tem tarefas para hoje.</p>
                         <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn btn-primary">
                             ➕ Adicionar Tarefa
                         </a>
@@ -222,15 +240,72 @@
             </div>
             <div class="card-body" style="padding-top: 0;">
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    {% if total_tarefas < 3 %}
+                    <!-- Botão Adicionar Tarefa (Hoje) -->
+                    {% if pode_adicionar_hoje %}
                         <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary">
                             <i class="fas fa-plus"></i>
                             <span>Adicionar Tarefa</span>
                         </a>
+                    {% else %}
+                        <button type="button" 
+                                class="btn-icon-text btn-icon-text-primary" 
+                                style="opacity: 0.5; cursor: pointer;"
+                                onclick="mostrarAlerta('alerta-hoje')">
+                            <i class="fas fa-plus"></i>
+                            <span>Adicionar Tarefa</span>
+                        </button>
+                        <!-- Pop-up de alerta para hoje -->
+                        <div id="alerta-hoje" class="popup-alerta" style="display: none;">
+                            <div class="popup-alerta-content">
+                                <div class="popup-alerta-header">
+                                    <i class="fas fa-exclamation-triangle" style="color: #F59E0B; margin-right: 0.5rem;"></i>
+                                    <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Limite de Tarefas Atingido</h3>
+                                    <button type="button" onclick="fecharAlerta('alerta-hoje')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #6B7280; margin-left: auto;">&times;</button>
+                                </div>
+                                <div class="popup-alerta-body">
+                                    <p style="margin: 0; color: #374151; line-height: 1.6;">
+                                        Você já tem 3 tarefas pendentes para hoje. Conclua algumas tarefas antes de adicionar mais.
+                                    </p>
+                                </div>
+                                <div class="popup-alerta-footer">
+                                    <button type="button" onclick="fecharAlerta('alerta-hoje')" class="btn btn-primary btn-sm">Entendi</button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Botão Criar Tarefa de Amanhã -->
+                    {% if pode_adicionar_amanha %}
                         <a href="{% url 'core:criar_tarefa_amanha' %}" class="btn-icon-text btn-icon-secondary">
                             <i class="fas fa-calendar-plus"></i>
                             <span>Criar Tarefa de Amanhã</span>
                         </a>
+                    {% else %}
+                        <button type="button" 
+                                class="btn-icon-text btn-icon-secondary" 
+                                style="opacity: 0.5; cursor: pointer;"
+                                onclick="mostrarAlerta('alerta-amanha')">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Criar Tarefa de Amanhã</span>
+                        </button>
+                        <!-- Pop-up de alerta para amanhã -->
+                        <div id="alerta-amanha" class="popup-alerta" style="display: none;">
+                            <div class="popup-alerta-content">
+                                <div class="popup-alerta-header">
+                                    <i class="fas fa-exclamation-triangle" style="color: #F59E0B; margin-right: 0.5rem;"></i>
+                                    <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Limite de Tarefas Atingido</h3>
+                                    <button type="button" onclick="fecharAlerta('alerta-amanha')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #6B7280; margin-left: auto;">&times;</button>
+                                </div>
+                                <div class="popup-alerta-body">
+                                    <p style="margin: 0; color: #374151; line-height: 1.6;">
+                                        Você já tem 3 tarefas pendentes para amanhã. Conclua ou remova algumas tarefas antes de adicionar mais.
+                                    </p>
+                                </div>
+                                <div class="popup-alerta-footer">
+                                    <button type="button" onclick="fecharAlerta('alerta-amanha')" class="btn btn-primary btn-sm">Entendi</button>
+                                </div>
+                            </div>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -250,7 +325,7 @@
                 <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: #3730A3;">
                     💡 Precisa de ajuda?
                 </h3>
-                <p style="font-size: 0.875rem; color: #4B5563; margin-bottom: 1rem;">
+                <p style="font-size: 0.875rem; margin-bottom: 1rem;" class="text-secondary">
                     Precisa de ajuda para definir suas tarefas de hoje? Use nossa sugestão inteligente!
                 </p>
                 <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary" style="background-color: #6366F1;">
@@ -270,10 +345,10 @@
             começar.
         -->
         <div class="card fade-in" style="text-align: center; padding: 3rem 1.5rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">
                 Comece seu dia de foco
             </h2>
-            <p style="color: #6B7280; margin-bottom: 2rem; font-size: 1rem;">
+            <p style="margin-bottom: 2rem; font-size: 1rem;" class="text-muted">
                 Defina até 3 tarefas importantes para hoje.<br>
                 <strong>Menos é mais!</strong>
             </p>
@@ -286,7 +361,301 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+    /* Estilos para pop-up de alerta */
+    .popup-alerta {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    .popup-alerta-content {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-width: 90%;
+        width: 100%;
+        max-width: 400px;
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .popup-alerta-header {
+        display: flex;
+        align-items: center;
+        padding: 1.25rem;
+        border-bottom: 1px solid #E5E7EB;
+    }
+    
+    .popup-alerta-body {
+        padding: 1.25rem;
+    }
+    
+    .popup-alerta-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid #E5E7EB;
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
 <script>
+    // ============================================
+    // FILTRO DE TAREFAS CONCLUÍDAS
+    // ============================================
+    // Por padrão, mostra apenas tarefas não concluídas
+    // Permite alternar para mostrar todas as tarefas
+    
+    function toggleFiltroTarefas() {
+        const mostrarConcluidas = localStorage.getItem('mostrar_tarefas_concluidas') === 'true';
+        const novoEstado = !mostrarConcluidas;
+        
+        localStorage.setItem('mostrar_tarefas_concluidas', novoEstado.toString());
+        aplicarFiltroTarefas(novoEstado);
+    }
+    
+    function aplicarFiltroTarefas(mostrarConcluidas) {
+        const taskCards = document.querySelectorAll('.task-card');
+        const filtroIcon = document.getElementById('filtro-icon');
+        const filtroTexto = document.getElementById('filtro-texto');
+        
+        taskCards.forEach(function(card) {
+            const isConcluida = card.classList.contains('task-concluida');
+            
+            if (isConcluida) {
+                if (mostrarConcluidas) {
+                    // Mostrar tarefas concluídas
+                    card.style.display = '';
+                    card.style.opacity = '1';
+                    card.style.transition = 'opacity 0.3s ease-in';
+                } else {
+                    // Ocultar tarefas concluídas
+                    card.style.display = 'none';
+                }
+            }
+        });
+        
+        // Atualizar ícone e texto do botão
+        if (mostrarConcluidas) {
+            filtroIcon.className = 'fas fa-eye-slash';
+            filtroTexto.textContent = 'Ocultar concluídas';
+        } else {
+            filtroIcon.className = 'fas fa-filter';
+            filtroTexto.textContent = 'Mostrar concluídas';
+        }
+    }
+    
+    // Aplicar filtro ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        const mostrarConcluidas = localStorage.getItem('mostrar_tarefas_concluidas') === 'true';
+        aplicarFiltroTarefas(mostrarConcluidas);
+    });
+    
+    // ============================================
+    // FUNÇÕES PARA CONTROLAR POP-UPS DE ALERTA
+    // ============================================
+    function mostrarAlerta(id) {
+        const popup = document.getElementById(id);
+        if (popup) {
+            popup.style.display = 'flex';
+            // Previne scroll do body quando pop-up está aberto
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function fecharAlerta(id) {
+        const popup = document.getElementById(id);
+        if (popup) {
+            popup.style.display = 'none';
+            // Restaura scroll do body
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Fechar pop-up ao clicar fora dele
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.popup-alerta').forEach(function(popup) {
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    fecharAlerta(popup.id);
+                }
+            });
+        });
+        
+        // Fechar pop-up com tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.popup-alerta').forEach(function(popup) {
+                    if (popup.style.display === 'flex') {
+                        fecharAlerta(popup.id);
+                    }
+                });
+            }
+        });
+    });
+    
+    // ============================================
+    // VERIFICAÇÃO DE SINCRONIZAÇÃO DE DIA (HOME)
+    // ============================================
+    // Verifica se a data do servidor corresponde à
+    // data esperada no navegador e valida integridade das tarefas.
+    (function() {
+        'use strict';
+        
+        // Obtém a data do contexto Django (formato: {{ hoje|date:"Y-m-d" }})
+        const serverDate = '{{ hoje|date:"Y-m-d" }}';
+        
+        // Obtém a data atual do navegador no mesmo timezone do servidor (America/Sao_Paulo)
+        // Isso garante que a comparação seja feita no mesmo fuso horário
+        function getCurrentDateString() {
+            const now = new Date();
+            // Usa Intl.DateTimeFormat para obter a data no timezone do servidor (America/Sao_Paulo)
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            // Retorna no formato YYYY-MM-DD
+            return formatter.format(now);
+        }
+        
+        const clientDate = getCurrentDateString();
+        
+        // Verifica se já tentamos recarregar recentemente para evitar loops infinitos
+        const lastReloadAttempt = localStorage.getItem('app_last_reload_attempt');
+        const now = Date.now();
+        const RELOAD_COOLDOWN = 5000; // 5 segundos de cooldown entre recarregamentos
+        
+        // Verifica integridade das tarefas na página
+        function validateTasksIntegrity() {
+            const taskCards = document.querySelectorAll('.task-card');
+            let inconsistencies = [];
+            
+            taskCards.forEach(function(taskCard) {
+                const taskId = taskCard.getAttribute('data-task-id');
+                const isCompleted = taskCard.classList.contains('completed');
+                const statusBadge = taskCard.querySelector('.badge-success, .badge-info');
+                const completeButton = taskCard.querySelector('button[type="submit"]:disabled');
+                
+                // Verifica se há inconsistências visuais
+                if (isCompleted && !completeButton) {
+                    inconsistencies.push({
+                        taskId: taskId,
+                        issue: 'Tarefa marcada como concluída mas botão não está desabilitado'
+                    });
+                }
+                
+                // Verifica se há tarefas que aparecem como concluídas mas não deveriam
+                // (tarefas criadas recentemente não devem estar concluídas)
+                const taskTitle = taskCard.querySelector('.task-title');
+                if (taskTitle && isCompleted) {
+                    // Log para debug
+                    console.log('[Task Validation] Tarefa encontrada como concluída:', {
+                        taskId: taskId,
+                        title: taskTitle.textContent,
+                        isCompleted: isCompleted
+                    });
+                }
+            });
+            
+            if (inconsistencies.length > 0) {
+                console.warn('[Task Validation] Inconsistências detectadas:', inconsistencies);
+                // Não força recarregamento aqui, apenas loga para debug
+                // O recarregamento será feito pela verificação de data se necessário
+            }
+            
+            return inconsistencies.length === 0;
+        }
+        
+        // Compara as datas
+        if (serverDate && clientDate && serverDate !== clientDate) {
+            console.warn('[Day Sync Home] Inconsistência detectada:', {
+                serverDate: serverDate,
+                clientDate: clientDate,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Valida tarefas antes de recarregar
+            validateTasksIntegrity();
+            
+            // Verifica se já tentamos recarregar recentemente (evita loop infinito)
+            if (lastReloadAttempt && (now - parseInt(lastReloadAttempt)) < RELOAD_COOLDOWN) {
+                console.log('[Day Sync Home] Recarregamento recente detectado, ignorando inconsistência para evitar loop');
+                // Limpa o flag de recarregamento após o cooldown
+                setTimeout(function() {
+                    localStorage.removeItem('app_last_reload_attempt');
+                }, RELOAD_COOLDOWN);
+                return; // Não recarrega, evita loop infinito
+            }
+            
+            // Marca que vamos tentar recarregar
+            localStorage.setItem('app_last_reload_attempt', now.toString());
+            
+            // Se há diferença, força recarregamento
+            // Isso pode acontecer se o cache do service worker estiver servindo
+            // uma versão antiga da página
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'FORCE_REFRESH',
+                    reason: 'date_mismatch'
+                });
+            }
+            
+            // Verifica se há operação em andamento antes de recarregar
+            const operationInProgress = localStorage.getItem('app_operation_in_progress');
+            if (operationInProgress) {
+                console.log('[Day Sync Home] Operação em andamento detectada, aguardando antes de recarregar...');
+                // Aguarda 3 segundos antes de recarregar
+                setTimeout(function() {
+                    window.location.reload(true);
+                }, 3000);
+            } else {
+                // Recarrega a página para obter dados atualizados
+                setTimeout(function() {
+                    window.location.reload(true);
+                }, 100);
+            }
+        } else {
+            // Se as datas coincidem, valida integridade das tarefas
+            validateTasksIntegrity();
+            
+            // Salva no localStorage para referência futura
+            if (serverDate) {
+                localStorage.setItem('app_last_verified_day', serverDate);
+            }
+            
+            // Limpa o flag de tentativa de recarregamento se as datas coincidem
+            localStorage.removeItem('app_last_reload_attempt');
+        }
+    })();
+    
     // ============================================
     // ATUALIZAR PROGRESSO SEM RECARREGAR
     // ============================================
@@ -331,6 +700,12 @@
                 btn.disabled = true;
             });
             taskCard.classList.add('completed');
+            taskCard.classList.add('task-concluida');
+            taskCard.setAttribute('data-task-status', 'concluida');
+            
+            // Aplicar filtro após concluir tarefa
+            const mostrarConcluidas = localStorage.getItem('mostrar_tarefas_concluidas') === 'true';
+            aplicarFiltroTarefas(mostrarConcluidas);
         }
         
         // Atualiza contadores do dia (se disponível)
@@ -424,10 +799,22 @@
             .then(data => {
                 if (data.success) {
                     atualizarProgressoTarefa(taskCard, data);
-                    // Recarrega após um pequeno delay para atualizar contadores do dia
-                    setTimeout(() => {
-                        location.reload();
-                    }, 500);
+                    // Se há URL para registrar conquista, pergunta ao usuário
+                    if (data.registrar_conquista_url) {
+                        if (confirm('Tarefa concluída! Deseja registrar uma conquista com uma foto?')) {
+                            window.location.href = data.registrar_conquista_url;
+                        } else {
+                            // Recarrega após um pequeno delay para atualizar contadores do dia
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        }
+                    } else {
+                        // Recarrega após um pequeno delay para atualizar contadores do dia
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
+                    }
                 } else {
                     alert(data.error || 'Erro ao concluir tarefa');
                     button.disabled = false;

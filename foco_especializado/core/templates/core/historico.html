@@ -45,6 +45,11 @@
                                 <p style="font-size: 0.875rem; color: #6B7280; margin: 0;">
                                     {{ plan.tarefas_concluidas }} de {{ plan.total_tarefas }} tarefas concluídas
                                 </p>
+                                {% if plan.total_conquistas > 0 %}
+                                    <p style="font-size: 0.75rem; color: #4F46E5; margin-top: 0.25rem; margin-bottom: 0;">
+                                        <i class="fas fa-camera"></i> {{ plan.total_conquistas }} conquista{{ plan.total_conquistas|pluralize }}
+                                    </p>
+                                {% endif %}
                                 {% if plan.progresso_medio is not None %}
                                 <p style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.25rem; margin-bottom: 0;">
                                     Progresso médio: {{ plan.progresso_medio }}%

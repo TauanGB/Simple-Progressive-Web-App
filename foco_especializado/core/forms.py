@@ -2,7 +2,8 @@
 Formulários para o app de foco diário.
 """
 from django import forms
-from .models import DayPlan, Task
+from .models import DayPlan, Task, TaskMoment
+from .utils import get_current_date
 
 
 class TaskForm(forms.ModelForm):
@@ -55,14 +56,13 @@ class TaskForm(forms.ModelForm):
         self.fields['total_steps'].required = False
         
         # Definir valor inicial do campo de data
-        from django.utils import timezone
         if self.instance and self.instance.pk:
             # Se estiver editando uma tarefa existente, usar a data atual do day_plan
             self.fields['data_da_tarefa'].initial = self.instance.day_plan.data
         else:
             # Se for uma nova tarefa, usar a data de hoje
             if not self.fields['data_da_tarefa'].initial:
-                self.fields['data_da_tarefa'].initial = timezone.now().date()
+                self.fields['data_da_tarefa'].initial = get_current_date()
 
 
 class DayPlanForm(forms.ModelForm):
@@ -159,4 +159,37 @@ class RevisaoDiaForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class TaskMomentForm(forms.ModelForm):
+    """Formulário para registrar uma conquista/momento de uma tarefa."""
+    
+    class Meta:
+        model = TaskMoment
+        fields = ['image', 'caption']
+        widgets = {
+            'image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+                'capture': 'environment',
+            }),
+            'caption': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Legenda opcional (ex.: "Finalizei o projeto!")',
+                'maxlength': 200,
+            }),
+        }
+        labels = {
+            'image': 'Imagem da Conquista',
+            'caption': 'Legenda (opcional)',
+        }
+        help_texts = {
+            'image': 'Escolha uma imagem para registrar este momento especial da tarefa.',
+            'caption': 'Adicione uma legenda curta para descrever este momento.',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['image'].required = True
+        self.fields['caption'].required = False
 

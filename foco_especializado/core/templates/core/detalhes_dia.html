@@ -68,7 +68,7 @@
                                 </div>
                             </div>
                             
-                            <div style="margin-top: 0.75rem;">
+                            <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                                 <span class="badge {% if task.status == 'concluida' %}badge-success{% else %}badge-info{% endif %}">
                                     {% if task.status == 'concluida' %}
                                         ✓ Concluída
@@ -79,6 +79,12 @@
                                         Pendente
                                     {% endif %}
                                 </span>
+                                {% if task.status == 'concluida' and task.moments.exists %}
+                                    <a href="{% url 'core:detalhes_tarefa' task.id %}" style="display: inline-flex; align-items: center; gap: 0.25rem; color: #4F46E5; text-decoration: none; font-size: 0.875rem;">
+                                        <i class="fas fa-camera"></i>
+                                        <span>{{ task.moments.count }} conquista{{ task.moments.count|pluralize }}</span>
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -120,9 +126,9 @@
 
     <!-- Botão de voltar -->
     <div style="margin-top: 1.5rem;">
-        <a href="{% url 'core:historico' %}" class="btn-icon-text btn-icon-text-primary">
+        <a href="{% url 'core:resultados' %}" class="btn-icon-text btn-icon-text-primary">
             <i class="fas fa-arrow-left"></i>
-            <span>Voltar ao Histórico</span>
+            <span>Voltar aos Resultados</span>
         </a>
     </div>
 {% endblock %}
