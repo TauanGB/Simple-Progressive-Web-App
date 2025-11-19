@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -37,6 +37,9 @@
     
     <!-- CSS Customizado - Estilos de App Mobile -->
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    
+    <!-- Script de Tema (carrega imediatamente para evitar flash de tema errado) -->
+    <script src="{% static 'js/theme.js' %}"></script>
     
     {% if PWA_SETTINGS.enabled %}
     <!-- Manifest PWA -->
@@ -93,6 +96,14 @@
     <header class="app-header">
         <h1>{% block header_title %}Hoje{% endblock %}</h1>
         {% block header_subtitle %}{% endblock %}
+        <div class="theme-toggle-container">
+            <button id="theme-toggle" class="theme-toggle" 
+                    aria-label="Alternar modo claro/escuro"
+                    title="Alternar modo claro/escuro">
+                <span class="icon-sun">☀️</span>
+                <span class="icon-moon">🌙</span>
+            </button>
+        </div>
     </header>
     {% endif %}
 
@@ -215,11 +226,19 @@
             const OPERATION_PROTECTION_DELAY_MS = 3000; // Aguardar 3 segundos se houver operação em andamento
             
             /**
-             * Obtém a data atual no formato YYYY-MM-DD
+             * Obtém a data atual no formato YYYY-MM-DD no timezone do servidor (America/Sao_Paulo)
              */
             function getCurrentDateString() {
                 const now = new Date();
-                return now.toISOString().split('T')[0];
+                // Usa Intl.DateTimeFormat para obter a data no timezone do servidor (America/Sao_Paulo)
+                const formatter = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'America/Sao_Paulo',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                // Retorna no formato YYYY-MM-DD
+                return formatter.format(now);
             }
             
             /**

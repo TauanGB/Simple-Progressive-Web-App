@@ -16,9 +16,9 @@ from django.utils import timezone
 from django.conf import settings
 from django import forms
 
-from .models import DayPlan, Task
+from .models import DayPlan, Task, TaskMoment
 from .ai_service import sugerir_tarefas_por_ia
-from .forms import DayPlanForm, TaskForm, RevisaoDiaForm
+from .forms import DayPlanForm, TaskForm, RevisaoDiaForm, TaskMomentForm
 from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia, get_current_date, get_current_datetime
 
 
@@ -347,7 +347,7 @@ def concluir_tarefa(request, task_id):
     """
     Conclui uma tarefa (botão B).
     
-    Retorna JSON para requisições AJAX.
+    Retorna JSON para requisições AJAX ou redireciona para registro de conquista.
     """
     task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
     
@@ -357,6 +357,7 @@ def concluir_tarefa(request, task_id):
     day_plan.refresh_from_db()
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Para requisições AJAX, retorna JSON e inclui link para registrar conquista
         return JsonResponse({
             'success': True,
             'progress_percent': task.progress_percent,
@@ -365,10 +366,12 @@ def concluir_tarefa(request, task_id):
             'status': task.status,
             'tarefas_concluidas': day_plan.tarefas_concluidas,
             'total_tarefas': day_plan.total_tarefas,
+            'registrar_conquista_url': f'/tarefa/{task.id}/registrar-conquista/?from_complete=1',
         })
     
-    messages.success(request, 'Tarefa concluída!')
-    return redirect('core:home')
+    # Para requisições normais, redireciona para página de registro de conquista
+    messages.success(request, 'Tarefa concluída! Agora você pode registrar uma conquista.')
+    return redirect('core:registrar_conquista', task_id=task.id)
 
 
 @login_required
@@ -536,14 +539,19 @@ def historico(request):
     except DayPlan.DoesNotExist:
         streak = 0
     
-    # Adicionar informações de progresso médio para cada plano
+    # Adicionar informações de progresso médio e conquistas para cada plano
     for plan in day_plans:
         tasks = plan.tasks.all()
         if tasks.exists():
             total_progress = sum(task.progress_percent for task in tasks)
             plan.progresso_medio = int(total_progress / tasks.count())
+            
+            # Conta total de conquistas do plano
+            total_moments = TaskMoment.objects.filter(task__day_plan=plan).count()
+            plan.total_conquistas = total_moments
         else:
             plan.progresso_medio = 0
+            plan.total_conquistas = 0
     
     context = {
         'day_plans': day_plans,
@@ -733,3 +741,58 @@ def pwa_debug(request):
 
 def healthz(request):
     return JsonResponse({"status": "ok"})
+
+
+@login_required
+def registrar_conquista(request, task_id):
+    """
+    Registra uma conquista/momento para uma tarefa.
+    
+    Pode ser acessado após concluir uma tarefa ou diretamente
+    para adicionar uma conquista a uma tarefa já concluída.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    if request.method == 'POST':
+        form = TaskMomentForm(request.POST, request.FILES)
+        if form.is_valid():
+            task_moment = form.save(commit=False)
+            task_moment.task = task
+            task_moment.save()
+            
+            messages.success(request, 'Conquista registrada com sucesso! 🎉')
+            
+            # Verifica se veio de uma conclusão recente (parâmetro opcional)
+            if request.GET.get('from_complete') == '1':
+                return redirect('core:home')
+            else:
+                return redirect('core:detalhes_tarefa', task_id=task.id)
+        else:
+            messages.error(request, 'Erro ao registrar conquista. Verifique os dados e tente novamente.')
+    else:
+        form = TaskMomentForm()
+    
+    context = {
+        'form': form,
+        'task': task,
+        'day_plan': task.day_plan,
+    }
+    return render(request, 'core/registrar_conquista.html', context)
+
+
+@login_required
+def detalhes_tarefa(request, task_id):
+    """
+    Mostra os detalhes de uma tarefa, incluindo suas conquistas.
+    """
+    task = get_object_or_404(Task, id=task_id, day_plan__usuario=request.user)
+    
+    # Busca todas as conquistas da tarefa (ordenadas por data, mais recentes primeiro)
+    moments = task.moments.all()
+    
+    context = {
+        'task': task,
+        'day_plan': task.day_plan,
+        'moments': moments,
+    }
+    return render(request, 'core/detalhes_tarefa.html', context)

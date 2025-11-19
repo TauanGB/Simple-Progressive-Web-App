@@ -1,0 +1,106 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Registrar Conquista - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Registrar Conquista{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">{{ task.titulo }}</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        REGISTRAR CONQUISTA - MOBILE-FIRST
+        ============================================
+        Permite ao usuário registrar uma imagem
+        como conquista após concluir uma tarefa.
+    -->
+
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">🎉 Registre este momento!</h2>
+        </div>
+        <div class="card-body">
+            <p style="font-size: 1rem; margin-bottom: 1.5rem; color: #6B7280; line-height: 1.6;">
+                Parabéns por concluir esta tarefa! Capture este momento especial com uma foto.
+            </p>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Campo de imagem -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="{{ form.image.id_for_label }}" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151;">
+                        {{ form.image.label }}
+                    </label>
+                    {{ form.image }}
+                    {% if form.image.help_text %}
+                        <p style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem;">
+                            {{ form.image.help_text }}
+                        </p>
+                    {% endif %}
+                    {% if form.image.errors %}
+                        <div style="color: #DC2626; font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.image.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Campo de legenda -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="{{ form.caption.id_for_label }}" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151;">
+                        {{ form.caption.label }}
+                    </label>
+                    {{ form.caption }}
+                    {% if form.caption.help_text %}
+                        <p style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem;">
+                            {{ form.caption.help_text }}
+                        </p>
+                    {% endif %}
+                    {% if form.caption.errors %}
+                        <div style="color: #DC2626; font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.caption.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Botões de ação -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-camera"></i>
+                        Salvar Conquista
+                    </button>
+                    <a href="{% url 'core:home' %}" class="btn btn-secondary" style="width: 100%; text-align: center;">
+                        Pular
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Informações da tarefa -->
+    <div class="card fade-in" style="background-color: #F9FAFB;">
+        <div class="card-body">
+            <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                Tarefa concluída:
+            </h3>
+            <p style="font-size: 1rem; color: #111827; margin: 0;">
+                <strong>{{ task.titulo }}</strong>
+            </p>
+            {% if task.descricao %}
+                <p style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem; margin-bottom: 0;">
+                    {{ task.descricao }}
+                </p>
+            {% endif %}
+            {% if task.concluida_em %}
+                <p style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.75rem; margin-bottom: 0;">
+                    Concluída às {{ task.concluida_em|date:"H:i" }}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+

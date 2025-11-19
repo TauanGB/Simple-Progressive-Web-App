@@ -128,9 +128,17 @@
                 // Definir data padrão como amanhã se não tiver valor
                 if (campoData && !campoData.value) {
                     const hoje = new Date();
+                    // Calcula amanhã no timezone do servidor (America/Sao_Paulo)
+                    const formatter = new Intl.DateTimeFormat('en-CA', {
+                        timeZone: 'America/Sao_Paulo',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+                    // Cria uma data para amanhã
                     const amanha = new Date(hoje);
                     amanha.setDate(amanha.getDate() + 1);
-                    campoData.value = amanha.toISOString().split('T')[0];
+                    campoData.value = formatter.format(amanha);
                 }
             } else {
                 // Switch desativado: ocultar campo de data

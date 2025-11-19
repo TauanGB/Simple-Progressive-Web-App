@@ -11,7 +11,7 @@ from datetime import datetime
 # ATENÇÃO: Esta é uma configuração TEMPORÁRIA apenas para testes!
 # Para ativar: defina USE_LOCAL_TIME_FOR_TESTING = True
 # Para desativar: defina USE_LOCAL_TIME_FOR_TESTING = False
-USE_LOCAL_TIME_FOR_TESTING = True  # Mude para False quando terminar os testes
+USE_LOCAL_TIME_FOR_TESTING = False  # Usando timezone do Django (America/Sao_Paulo)
 # ============================================================================
 
 def get_current_date():

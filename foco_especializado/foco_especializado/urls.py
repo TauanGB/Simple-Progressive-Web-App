@@ -17,9 +17,11 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]
 
-# Serve arquivos estáticos em desenvolvimento
+# Serve arquivos estáticos e de mídia em desenvolvimento
 # Em DEBUG, o Django já serve arquivos estáticos automaticamente via django.contrib.staticfiles
 # Mas garantimos que funcione mesmo assim
 if settings.DEBUG:
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
     urlpatterns += staticfiles_urlpatterns()
+    # Serve arquivos de mídia em desenvolvimento
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

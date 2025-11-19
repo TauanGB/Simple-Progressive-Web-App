@@ -43,7 +43,7 @@
                 </div>
                 
                 <!-- Mensagem motivacional condicional -->
-                <p style="margin-top: 1rem; font-size: 0.875rem; color: #6B7280;">
+                <p style="margin-top: 1rem; font-size: 0.875rem;" class="text-muted">
                     {% if tarefas_concluidas == 0 %}
                         💪 Vamos começar com algo pequeno?
                     {% elif tarefas_concluidas < total_tarefas %}
@@ -101,7 +101,7 @@
                                              style="width: {{ task.progress_percent }}%" 
                                              data-progress="{{ task.progress_percent }}"></div>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #6B7280;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem;" class="text-muted">
                                         <span class="task-progress-text">
                                             {% if task.total_steps and task.total_steps > 0 %}
                                                 Etapas: {{ task.completed_steps }}/{{ task.total_steps }}
@@ -116,6 +116,11 @@
                                 {% if task.status == 'concluida' and task.concluida_em %}
                                     <p class="task-meta">
                                         ✓ Concluída às {{ task.concluida_em|date:"H:i" }}
+                                        {% if task.moments.exists %}
+                                            | <a href="{% url 'core:detalhes_tarefa' task.id %}" style="color: #4F46E5; text-decoration: none;">
+                                                <i class="fas fa-camera"></i> {{ task.moments.count }} conquista{{ task.moments.count|pluralize }}
+                                            </a>
+                                        {% endif %}
                                     </p>
                                 {% endif %}
                             </div>
@@ -200,7 +205,7 @@
                     </div>
                 {% empty %}
                     <div style="text-align: center; padding: 2rem 0;">
-                        <p style="color: #6B7280; margin-bottom: 1rem;">Você ainda não tem tarefas para hoje.</p>
+                        <p style="margin-bottom: 1rem;" class="text-muted">Você ainda não tem tarefas para hoje.</p>
                         <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn btn-primary">
                             ➕ Adicionar Tarefa
                         </a>
@@ -250,7 +255,7 @@
                 <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: #3730A3;">
                     💡 Precisa de ajuda?
                 </h3>
-                <p style="font-size: 0.875rem; color: #4B5563; margin-bottom: 1rem;">
+                <p style="font-size: 0.875rem; margin-bottom: 1rem;" class="text-secondary">
                     Precisa de ajuda para definir suas tarefas de hoje? Use nossa sugestão inteligente!
                 </p>
                 <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary" style="background-color: #6366F1;">
@@ -270,10 +275,10 @@
             começar.
         -->
         <div class="card fade-in" style="text-align: center; padding: 3rem 1.5rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">
                 Comece seu dia de foco
             </h2>
-            <p style="color: #6B7280; margin-bottom: 2rem; font-size: 1rem;">
+            <p style="margin-bottom: 2rem; font-size: 1rem;" class="text-muted">
                 Defina até 3 tarefas importantes para hoje.<br>
                 <strong>Menos é mais!</strong>
             </p>
@@ -298,13 +303,27 @@
         // Obtém a data do contexto Django (formato: {{ hoje|date:"Y-m-d" }})
         const serverDate = '{{ hoje|date:"Y-m-d" }}';
         
-        // Obtém a data atual do navegador
+        // Obtém a data atual do navegador no mesmo timezone do servidor (America/Sao_Paulo)
+        // Isso garante que a comparação seja feita no mesmo fuso horário
         function getCurrentDateString() {
             const now = new Date();
-            return now.toISOString().split('T')[0];
+            // Usa Intl.DateTimeFormat para obter a data no timezone do servidor (America/Sao_Paulo)
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            // Retorna no formato YYYY-MM-DD
+            return formatter.format(now);
         }
         
         const clientDate = getCurrentDateString();
+        
+        // Verifica se já tentamos recarregar recentemente para evitar loops infinitos
+        const lastReloadAttempt = localStorage.getItem('app_last_reload_attempt');
+        const now = Date.now();
+        const RELOAD_COOLDOWN = 5000; // 5 segundos de cooldown entre recarregamentos
         
         // Verifica integridade das tarefas na página
         function validateTasksIntegrity() {
@@ -358,6 +377,19 @@
             // Valida tarefas antes de recarregar
             validateTasksIntegrity();
             
+            // Verifica se já tentamos recarregar recentemente (evita loop infinito)
+            if (lastReloadAttempt && (now - parseInt(lastReloadAttempt)) < RELOAD_COOLDOWN) {
+                console.log('[Day Sync Home] Recarregamento recente detectado, ignorando inconsistência para evitar loop');
+                // Limpa o flag de recarregamento após o cooldown
+                setTimeout(function() {
+                    localStorage.removeItem('app_last_reload_attempt');
+                }, RELOAD_COOLDOWN);
+                return; // Não recarrega, evita loop infinito
+            }
+            
+            // Marca que vamos tentar recarregar
+            localStorage.setItem('app_last_reload_attempt', now.toString());
+            
             // Se há diferença, força recarregamento
             // Isso pode acontecer se o cache do service worker estiver servindo
             // uma versão antiga da página
@@ -390,6 +422,9 @@
             if (serverDate) {
                 localStorage.setItem('app_last_verified_day', serverDate);
             }
+            
+            // Limpa o flag de tentativa de recarregamento se as datas coincidem
+            localStorage.removeItem('app_last_reload_attempt');
         }
     })();
     
@@ -530,10 +565,22 @@
             .then(data => {
                 if (data.success) {
                     atualizarProgressoTarefa(taskCard, data);
-                    // Recarrega após um pequeno delay para atualizar contadores do dia
-                    setTimeout(() => {
-                        location.reload();
-                    }, 500);
+                    // Se há URL para registrar conquista, pergunta ao usuário
+                    if (data.registrar_conquista_url) {
+                        if (confirm('Tarefa concluída! Deseja registrar uma conquista com uma foto?')) {
+                            window.location.href = data.registrar_conquista_url;
+                        } else {
+                            // Recarrega após um pequeno delay para atualizar contadores do dia
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        }
+                    } else {
+                        // Recarrega após um pequeno delay para atualizar contadores do dia
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
+                    }
                 } else {
                     alert(data.error || 'Erro ao concluir tarefa');
                     button.disabled = false;

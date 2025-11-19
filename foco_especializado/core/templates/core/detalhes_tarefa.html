@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Detalhes da Tarefa - 3 Coisas de Hoje{% endblock %}
+
+{% block header_title %}Detalhes da Tarefa{% endblock %}
+
+{% block header_subtitle %}
+    <div class="header-subtitle">{{ task.titulo }}</div>
+{% endblock %}
+
+{% block content %}
+    <!-- 
+        ============================================
+        DETALHES DA TAREFA - MOBILE-FIRST
+        ============================================
+        Mostra informações da tarefa e suas
+        conquistas registradas.
+    -->
+
+    <!-- Informações da tarefa -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">Informações da Tarefa</h2>
+        </div>
+        <div class="card-body">
+            <div style="margin-bottom: 1rem;">
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">
+                    {{ task.titulo }}
+                </h3>
+                {% if task.descricao %}
+                    <p style="color: #6B7280; line-height: 1.6; margin-bottom: 1rem;">
+                        {{ task.descricao }}
+                    </p>
+                {% endif %}
+            </div>
+            
+            <!-- Status e progresso -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div>
+                    <span class="badge {% if task.status == 'concluida' %}badge-success{% else %}badge-info{% endif %}">
+                        {% if task.status == 'concluida' %}
+                            ✓ Concluída
+                            {% if task.concluida_em %}
+                                às {{ task.concluida_em|date:"H:i" }}
+                            {% endif %}
+                        {% else %}
+                            Pendente
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <!-- Barra de progresso -->
+                <div>
+                    <div class="progress-bar-container" style="margin-bottom: 0.5rem;">
+                        <div class="progress-bar {% if task.progress_percent == 100 %}success{% elif task.progress_percent > 0 %}warning{% endif %}" 
+                             style="width: {{ task.progress_percent }}%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #6B7280;">
+                        <span>
+                            {% if task.total_steps and task.total_steps > 0 %}
+                                Etapas: {{ task.completed_steps }}/{{ task.total_steps }}
+                            {% else %}
+                                Avanço livre
+                            {% endif %}
+                        </span>
+                        <span>{{ task.progress_percent }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conquistas -->
+    <div class="card fade-in">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="card-title">Conquistas</h2>
+            {% if task.status == 'concluida' %}
+                <a href="{% url 'core:registrar_conquista' task.id %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i>
+                    Adicionar
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body" style="padding-top: 0;">
+            {% if moments %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    {% for moment in moments %}
+                        <div class="moment-card" style="position: relative; cursor: pointer;" onclick="openMomentModal('{{ moment.image.url }}', '{{ moment.caption|default:""|escapejs }}', '{{ moment.created_at|date:"d/m/Y H:i" }}')">
+                            <img src="{{ moment.image.url }}" 
+                                 alt="{% if moment.caption %}{{ moment.caption }}{% else %}Conquista{% endif %}"
+                                 style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid #E5E7EB;">
+                            {% if moment.caption %}
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 0.5rem; border-radius: 0 0 8px 8px;">
+                                    <p style="color: white; font-size: 0.75rem; margin: 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                        {{ moment.caption }}
+                                    </p>
+                                </div>
+                            {% endif %}
+                            <div style="position: absolute; top: 0.25rem; right: 0.25rem; background: rgba(0,0,0,0.5); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.625rem;">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 2rem 0;">
+                    <i class="fas fa-camera" style="font-size: 3rem; color: #D1D5DB; margin-bottom: 1rem;"></i>
+                    <p style="color: #6B7280; margin-bottom: 1rem;">
+                        Nenhuma conquista registrada ainda.
+                    </p>
+                    {% if task.status == 'concluida' %}
+                        <a href="{% url 'core:registrar_conquista' task.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Registrar Primeira Conquista
+                        </a>
+                    {% else %}
+                        <p style="font-size: 0.875rem; color: #9CA3AF;">
+                            Conclua a tarefa para registrar conquistas.
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Botão de voltar -->
+    <div style="margin-top: 1.5rem;">
+        <a href="{% url 'core:home' %}" class="btn-icon-text btn-icon-text-primary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Voltar para Hoje</span>
+        </a>
+    </div>
+
+    <!-- Modal para visualizar imagem em tamanho maior -->
+    <div id="momentModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="position: relative; max-width: 90%; max-height: 90%; background: white; border-radius: 8px; padding: 1rem;">
+            <button onclick="closeMomentModal()" style="position: absolute; top: 0.5rem; right: 0.5rem; background: #DC2626; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="" style="max-width: 100%; max-height: 70vh; border-radius: 4px;">
+            <div id="modalCaption" style="margin-top: 1rem; text-align: center;">
+                <p id="modalCaptionText" style="color: #374151; font-weight: 600; margin-bottom: 0.5rem;"></p>
+                <p id="modalDate" style="color: #6B7280; font-size: 0.875rem; margin: 0;"></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openMomentModal(imageUrl, caption, date) {
+        const modal = document.getElementById('momentModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalCaptionText = document.getElementById('modalCaptionText');
+        const modalDate = document.getElementById('modalDate');
+        
+        modalImage.src = imageUrl;
+        modalImage.alt = caption || 'Conquista';
+        
+        if (caption) {
+            modalCaptionText.textContent = caption;
+            modalCaptionText.style.display = 'block';
+        } else {
+            modalCaptionText.style.display = 'none';
+        }
+        
+        modalDate.textContent = date || '';
+        
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMomentModal() {
+        const modal = document.getElementById('momentModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // Fechar modal ao clicar fora da imagem
+    document.getElementById('momentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeMomentModal();
+        }
+    });
+    
+    // Fechar modal com ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMomentModal();
+        }
+    });
+</script>
+{% endblock %}
+
+

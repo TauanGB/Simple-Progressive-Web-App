@@ -11,21 +11,26 @@
    VARIÁVEIS E CONFIGURAÇÕES GLOBAIS
    ============================================ */
 
+/* ============================================
+   SISTEMA DE TEMAS (LIGHT/DARK MODE)
+   ============================================
+   Variáveis de tema são definidas usando o atributo
+   data-theme no elemento raiz (html).
+   - data-theme="light": Tema claro (padrão)
+   - data-theme="dark": Tema escuro
+   
+   O JavaScript (theme.js) gerencia a alternância
+   entre os temas e persiste a escolha do usuário.
+*/
+
 :root {
+    /* Cores primárias (mantidas iguais em ambos os temas) */
     --primary-color: #4F46E5;
     --primary-dark: #4338CA;
     --success-color: #10B981;
     --success-dark: #059669;
     --warning-color: #F59E0B;
     --danger-color: #EF4444;
-    --gray-50: #F9FAFB;
-    --gray-100: #F3F4F6;
-    --gray-200: #E5E7EB;
-    --gray-300: #D1D5DB;
-    --gray-600: #4B5563;
-    --gray-700: #374151;
-    --gray-800: #1F2937;
-    --gray-900: #111827;
     
     /* Espaçamentos para mobile */
     --spacing-xs: 0.5rem;
@@ -53,6 +58,115 @@
 }
 
 /* ============================================
+   TEMA CLARO (LIGHT MODE)
+   ============================================ */
+:root,
+:root[data-theme="light"] {
+    /* Cores de fundo */
+    --bg-color: #F9FAFB;
+    --bg-card: #FFFFFF;
+    --bg-nav: #FFFFFF;
+    --bg-header: #FFFFFF;
+    
+    /* Cores de texto */
+    --text-color: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #6B7280;
+    
+    /* Cores de borda */
+    --border-color: #E5E7EB;
+    --border-light: #F3F4F6;
+    
+    /* Cores de destaque (botões, links) */
+    --accent-color: var(--primary-color);
+    --accent-hover: var(--primary-dark);
+    
+    /* Sombras (mais sutis no tema claro) */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    /* Cores de progresso e badges */
+    --progress-bg: #E5E7EB;
+    --badge-success-bg: #D1FAE5;
+    --badge-success-text: #065F46;
+    --badge-warning-bg: #FEF3C7;
+    --badge-warning-text: #92400E;
+    --badge-info-bg: #DBEAFE;
+    --badge-info-text: #1E40AF;
+    
+    /* Cores de alertas */
+    --alert-success-bg: #D1FAE5;
+    --alert-success-text: #065F46;
+    --alert-error-bg: #FEE2E2;
+    --alert-error-text: #991B1B;
+    --alert-info-bg: #DBEAFE;
+    --alert-info-text: #1E40AF;
+    
+    /* Cores de streak card */
+    --streak-bg: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    --streak-border: #F59E0B;
+    --streak-text: #92400E;
+    --streak-label: #78350F;
+}
+
+/* ============================================
+   TEMA ESCURO (DARK MODE)
+   ============================================
+   Cores suavizadas para evitar contraste muito
+   forte que pode causar desconforto visual,
+   especialmente para usuários com TDAH.
+*/
+:root[data-theme="dark"] {
+    /* Cores de fundo (tons suavizados, não preto puro) */
+    --bg-color: #1E293B;
+    --bg-card: #334155;
+    --bg-nav: #1E293B;
+    --bg-header: #1E293B;
+    
+    /* Cores de texto (branco suavizado) */
+    --text-color: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    
+    /* Cores de borda */
+    --border-color: #475569;
+    --border-light: #334155;
+    
+    /* Cores de destaque (mantidas vibrantes mas ajustadas) */
+    --accent-color: #6366F1;
+    --accent-hover: #818CF8;
+    
+    /* Sombras (mais pronunciadas no tema escuro) */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    
+    /* Cores de progresso e badges (ajustadas para contraste) */
+    --progress-bg: #475569;
+    --badge-success-bg: #065F46;
+    --badge-success-text: #D1FAE5;
+    --badge-warning-bg: #92400E;
+    --badge-warning-text: #FEF3C7;
+    --badge-info-bg: #1E40AF;
+    --badge-info-text: #DBEAFE;
+    
+    /* Cores de alertas (invertidas para melhor contraste) */
+    --alert-success-bg: #065F46;
+    --alert-success-text: #D1FAE5;
+    --alert-error-bg: #991B1B;
+    --alert-error-text: #FEE2E2;
+    --alert-info-bg: #1E40AF;
+    --alert-info-text: #DBEAFE;
+    
+    /* Cores de streak card (ajustadas para tema escuro) */
+    --streak-bg: linear-gradient(135deg, #78350F 0%, #92400E 100%);
+    --streak-border: #F59E0B;
+    --streak-text: #FEF3C7;
+    --streak-label: #FDE68A;
+}
+
+/* ============================================
    RESET E BASE
    ============================================ */
 
@@ -64,8 +178,8 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: var(--gray-50);
-    color: var(--gray-900);
+    background-color: var(--bg-color);
+    color: var(--text-color);
     /* Prevenir scroll horizontal em mobile */
     overflow-x: hidden;
     /* Garantir que o body tenha altura mínima */
@@ -75,6 +189,8 @@ body {
     padding-top: env(safe-area-inset-top);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    /* Transição suave ao mudar de tema */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================
@@ -82,26 +198,40 @@ body {
    ============================================ */
 
 .app-header {
-    background-color: white;
-    border-bottom: 1px solid var(--gray-200);
+    background-color: var(--bg-header);
+    border-bottom: 1px solid var(--border-color);
     padding: var(--spacing-md) var(--spacing-lg);
     position: sticky;
     top: 0;
     z-index: 100;
     box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
 }
 
 .app-header h1 {
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
-    color: var(--gray-900);
+    color: var(--text-color);
+    flex: 1;
 }
 
 .app-header .header-subtitle {
     font-size: 0.875rem;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     margin-top: 0.25rem;
+    width: 100%;
+}
+
+/* Container para título e subtítulo no header */
+.app-header > h1 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 /* ============================================
@@ -143,8 +273,8 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: white;
-    border-top: 1px solid var(--gray-200);
+    background-color: var(--bg-nav);
+    border-top: 1px solid var(--border-color);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     height: var(--nav-bottom-height);
@@ -154,6 +284,7 @@ body {
     padding: 0 var(--spacing-sm);
     /* Safe area para dispositivos com notch */
     padding-bottom: env(safe-area-inset-bottom);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .app-nav-bottom a {
@@ -162,7 +293,7 @@ body {
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 500;
     padding: var(--spacing-xs) var(--spacing-sm);
@@ -175,8 +306,8 @@ body {
 
 .app-nav-bottom a:hover,
 .app-nav-bottom a.active {
-    color: var(--primary-color);
-    background-color: var(--gray-50);
+    color: var(--accent-color);
+    background-color: var(--border-light);
 }
 
 .app-nav-bottom a .nav-icon {
@@ -225,12 +356,12 @@ body {
 */
 
 .card {
-    background-color: white;
+    background-color: var(--bg-card);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
 }
 
 .card:hover {
@@ -241,24 +372,24 @@ body {
 .card-header {
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .card-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-color);
     margin: 0;
 }
 
 .card-subtitle {
     font-size: 0.875rem;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     margin-top: 0.25rem;
 }
 
 .card-body {
-    color: var(--gray-700);
+    color: var(--text-color);
 }
 
 /* ============================================
@@ -266,7 +397,7 @@ body {
    ============================================ */
 
 .task-card {
-    background-color: white;
+    background-color: var(--bg-card);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     padding: var(--spacing-lg);
@@ -287,7 +418,7 @@ body {
 
 .task-card.completed .task-title {
     text-decoration: line-through;
-    color: var(--gray-600);
+    color: var(--text-secondary);
 }
 
 .task-header {
@@ -312,19 +443,19 @@ body {
 .task-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-color);
     margin: 0 0 var(--spacing-xs) 0;
 }
 
 .task-description {
     font-size: 0.875rem;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     margin: var(--spacing-xs) 0;
 }
 
 .task-meta {
     font-size: 0.75rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     margin-top: var(--spacing-xs);
 }
 
@@ -384,13 +515,13 @@ body {
 }
 
 .btn-secondary {
-    background-color: var(--gray-200);
-    color: var(--gray-800);
+    background-color: var(--border-light);
+    color: var(--text-color);
 }
 
 .btn-secondary:hover {
-    background-color: var(--gray-300);
-    color: var(--gray-900);
+    background-color: var(--border-color);
+    color: var(--text-color);
 }
 
 .btn-danger {
@@ -427,7 +558,7 @@ body {
 .progress-bar-container {
     width: 100%;
     height: 8px;
-    background-color: var(--gray-200);
+    background-color: var(--progress-bg);
     border-radius: var(--radius-sm);
     overflow: hidden;
     margin: var(--spacing-sm) 0;
@@ -463,18 +594,18 @@ body {
 }
 
 .badge-success {
-    background-color: #D1FAE5;
-    color: #065F46;
+    background-color: var(--badge-success-bg);
+    color: var(--badge-success-text);
 }
 
 .badge-warning {
-    background-color: #FEF3C7;
-    color: #92400E;
+    background-color: var(--badge-warning-bg);
+    color: var(--badge-warning-text);
 }
 
 .badge-info {
-    background-color: #DBEAFE;
-    color: #1E40AF;
+    background-color: var(--badge-info-bg);
+    color: var(--badge-info-text);
 }
 
 /* ============================================
@@ -482,24 +613,25 @@ body {
    ============================================ */
 
 .streak-card {
-    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-    border: 2px solid #F59E0B;
+    background: var(--streak-bg);
+    border: 2px solid var(--streak-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     text-align: center;
     margin-bottom: var(--spacing-lg);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .streak-number {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #92400E;
+    color: var(--streak-text);
     margin: var(--spacing-sm) 0;
 }
 
 .streak-label {
     font-size: 0.875rem;
-    color: #78350F;
+    color: var(--streak-label);
     font-weight: 500;
 }
 
@@ -515,21 +647,21 @@ body {
 }
 
 .alert-success {
-    background-color: #D1FAE5;
+    background-color: var(--alert-success-bg);
     border-color: var(--success-color);
-    color: #065F46;
+    color: var(--alert-success-text);
 }
 
 .alert-error {
-    background-color: #FEE2E2;
+    background-color: var(--alert-error-bg);
     border-color: var(--danger-color);
-    color: #991B1B;
+    color: var(--alert-error-text);
 }
 
 .alert-info {
-    background-color: #DBEAFE;
+    background-color: var(--alert-info-bg);
     border-color: #3B82F6;
-    color: #1E40AF;
+    color: var(--alert-info-text);
 }
 
 /* ============================================
@@ -552,11 +684,11 @@ select {
     padding: var(--spacing-md);
     font-size: 1rem; /* Tamanho mínimo para evitar zoom automático no iOS */
     font-family: inherit;
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    background-color: white;
-    color: var(--gray-900);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--bg-card);
+    color: var(--text-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
     /* Garantir altura mínima para toque fácil */
     min-height: 44px;
     box-sizing: border-box;
@@ -596,12 +728,13 @@ select {
     width: 100%;
     padding: var(--spacing-md);
     font-size: 1rem;
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    background-color: white;
-    color: var(--gray-900);
+    background-color: var(--bg-card);
+    color: var(--text-color);
     min-height: 44px;
     box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .form-control:focus {
@@ -629,6 +762,14 @@ select {
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
 
 /* ============================================
    RESPONSIVIDADE ADICIONAL
@@ -949,8 +1090,8 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
     min-width: 40px;
     border-radius: var(--radius-md);
     border: 1px solid transparent;
-    background: var(--gray-100);
-    color: var(--gray-700);
+    background: var(--border-light);
+    color: var(--text-color);
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -958,7 +1099,7 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
 }
 
 .btn-icon:hover {
-    background: var(--gray-200);
+    background: var(--border-color);
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
 }
@@ -1009,14 +1150,14 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
 }
 
 .btn-icon-secondary {
-    background: var(--gray-200);
-    color: var(--gray-700);
-    border-color: var(--gray-300);
+    background: var(--border-light);
+    color: var(--text-color);
+    border-color: var(--border-color);
 }
 
 .btn-icon-secondary:hover {
-    background: var(--gray-300);
-    color: var(--gray-800);
+    background: var(--border-color);
+    color: var(--text-color);
 }
 
 /* Tamanhos de botões de ícone */
@@ -1055,8 +1196,8 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
     padding: 0.5rem 1rem;
     border-radius: var(--radius-md);
     border: 1px solid transparent;
-    background: var(--gray-100);
-    color: var(--gray-700);
+    background: var(--border-light);
+    color: var(--text-color);
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -1065,7 +1206,7 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
 }
 
 .btn-icon-text:hover {
-    background: var(--gray-200);
+    background: var(--border-color);
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
 }
@@ -1079,5 +1220,88 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
 .btn-icon-text-primary:hover {
     background: var(--primary-dark);
     color: white;
+}
+
+/* ============================================
+   TOGGLE DE TEMA (DARK MODE)
+   ============================================
+   Botão para alternar entre modo claro e escuro.
+   Posicionado no header, sempre acessível.
+*/
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.25rem;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.theme-toggle:hover {
+    background: var(--border-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Ícone do sol (modo claro) */
+.theme-toggle .icon-sun {
+    display: block;
+}
+
+.theme-toggle .icon-moon {
+    display: none;
+}
+
+/* Quando está em modo escuro, mostra lua */
+[data-theme="dark"] .theme-toggle .icon-sun {
+    display: none;
+}
+
+[data-theme="dark"] .theme-toggle .icon-moon {
+    display: block;
+}
+
+/* Container do toggle no header */
+.app-header .theme-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-left: auto;
+}
+
+/* Em mobile, ajustar posicionamento */
+@media (max-width: 767px) {
+    .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .app-header h1 {
+        flex: 1;
+    }
+    
+    .app-header .theme-toggle-container {
+        margin-left: var(--spacing-md);
+    }
 }
 
