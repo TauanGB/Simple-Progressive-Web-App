@@ -79,13 +79,26 @@
             de tocar e interagir em mobile.
         -->
         <div class="card fade-in">
-            <div class="card-header">
-                <h2 class="card-title">Tarefas de Foco</h2>
-                <div class="card-subtitle">Até 3 tarefas importantes por dia</div>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title">Tarefas de Foco</h2>
+                    <div class="card-subtitle">Até 3 tarefas importantes por dia</div>
+                </div>
+                <button type="button" 
+                        id="toggle-filtro-tarefas" 
+                        class="btn btn-sm btn-secondary"
+                        style="display: inline-flex; align-items: center; gap: 0.5rem;"
+                        onclick="toggleFiltroTarefas()"
+                        title="Mostrar/ocultar tarefas concluídas">
+                    <i class="fas fa-filter" id="filtro-icon"></i>
+                    <span id="filtro-texto">Mostrar concluídas</span>
+                </button>
             </div>
             <div class="card-body" style="padding-top: 0;">
                 {% for task in tasks %}
-                    <div class="task-card {% if task.status == 'concluida' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                    <div class="task-card {% if task.status == 'concluida' %}completed task-concluida{% endif %}" 
+                         data-task-id="{{ task.id }}"
+                         data-task-status="{{ task.status }}">
                         <div class="task-header">
                             <span class="task-number">{{ task.ordem }}</span>
                             <div class="task-content" style="flex: 1;">
@@ -227,15 +240,72 @@
             </div>
             <div class="card-body" style="padding-top: 0;">
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    {% if total_tarefas < 3 %}
+                    <!-- Botão Adicionar Tarefa (Hoje) -->
+                    {% if pode_adicionar_hoje %}
                         <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn-icon-text btn-icon-text-primary">
                             <i class="fas fa-plus"></i>
                             <span>Adicionar Tarefa</span>
                         </a>
+                    {% else %}
+                        <button type="button" 
+                                class="btn-icon-text btn-icon-text-primary" 
+                                style="opacity: 0.5; cursor: pointer;"
+                                onclick="mostrarAlerta('alerta-hoje')">
+                            <i class="fas fa-plus"></i>
+                            <span>Adicionar Tarefa</span>
+                        </button>
+                        <!-- Pop-up de alerta para hoje -->
+                        <div id="alerta-hoje" class="popup-alerta" style="display: none;">
+                            <div class="popup-alerta-content">
+                                <div class="popup-alerta-header">
+                                    <i class="fas fa-exclamation-triangle" style="color: #F59E0B; margin-right: 0.5rem;"></i>
+                                    <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Limite de Tarefas Atingido</h3>
+                                    <button type="button" onclick="fecharAlerta('alerta-hoje')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #6B7280; margin-left: auto;">&times;</button>
+                                </div>
+                                <div class="popup-alerta-body">
+                                    <p style="margin: 0; color: #374151; line-height: 1.6;">
+                                        Você já tem 3 tarefas pendentes para hoje. Conclua algumas tarefas antes de adicionar mais.
+                                    </p>
+                                </div>
+                                <div class="popup-alerta-footer">
+                                    <button type="button" onclick="fecharAlerta('alerta-hoje')" class="btn btn-primary btn-sm">Entendi</button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Botão Criar Tarefa de Amanhã -->
+                    {% if pode_adicionar_amanha %}
                         <a href="{% url 'core:criar_tarefa_amanha' %}" class="btn-icon-text btn-icon-secondary">
                             <i class="fas fa-calendar-plus"></i>
                             <span>Criar Tarefa de Amanhã</span>
                         </a>
+                    {% else %}
+                        <button type="button" 
+                                class="btn-icon-text btn-icon-secondary" 
+                                style="opacity: 0.5; cursor: pointer;"
+                                onclick="mostrarAlerta('alerta-amanha')">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Criar Tarefa de Amanhã</span>
+                        </button>
+                        <!-- Pop-up de alerta para amanhã -->
+                        <div id="alerta-amanha" class="popup-alerta" style="display: none;">
+                            <div class="popup-alerta-content">
+                                <div class="popup-alerta-header">
+                                    <i class="fas fa-exclamation-triangle" style="color: #F59E0B; margin-right: 0.5rem;"></i>
+                                    <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Limite de Tarefas Atingido</h3>
+                                    <button type="button" onclick="fecharAlerta('alerta-amanha')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #6B7280; margin-left: auto;">&times;</button>
+                                </div>
+                                <div class="popup-alerta-body">
+                                    <p style="margin: 0; color: #374151; line-height: 1.6;">
+                                        Você já tem 3 tarefas pendentes para amanhã. Conclua ou remova algumas tarefas antes de adicionar mais.
+                                    </p>
+                                </div>
+                                <div class="popup-alerta-footer">
+                                    <button type="button" onclick="fecharAlerta('alerta-amanha')" class="btn btn-primary btn-sm">Entendi</button>
+                                </div>
+                            </div>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -291,7 +361,165 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+    /* Estilos para pop-up de alerta */
+    .popup-alerta {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    .popup-alerta-content {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-width: 90%;
+        width: 100%;
+        max-width: 400px;
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .popup-alerta-header {
+        display: flex;
+        align-items: center;
+        padding: 1.25rem;
+        border-bottom: 1px solid #E5E7EB;
+    }
+    
+    .popup-alerta-body {
+        padding: 1.25rem;
+    }
+    
+    .popup-alerta-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid #E5E7EB;
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
 <script>
+    // ============================================
+    // FILTRO DE TAREFAS CONCLUÍDAS
+    // ============================================
+    // Por padrão, mostra apenas tarefas não concluídas
+    // Permite alternar para mostrar todas as tarefas
+    
+    function toggleFiltroTarefas() {
+        const mostrarConcluidas = localStorage.getItem('mostrar_tarefas_concluidas') === 'true';
+        const novoEstado = !mostrarConcluidas;
+        
+        localStorage.setItem('mostrar_tarefas_concluidas', novoEstado.toString());
+        aplicarFiltroTarefas(novoEstado);
+    }
+    
+    function aplicarFiltroTarefas(mostrarConcluidas) {
+        const taskCards = document.querySelectorAll('.task-card');
+        const filtroIcon = document.getElementById('filtro-icon');
+        const filtroTexto = document.getElementById('filtro-texto');
+        
+        taskCards.forEach(function(card) {
+            const isConcluida = card.classList.contains('task-concluida');
+            
+            if (isConcluida) {
+                if (mostrarConcluidas) {
+                    // Mostrar tarefas concluídas
+                    card.style.display = '';
+                    card.style.opacity = '1';
+                    card.style.transition = 'opacity 0.3s ease-in';
+                } else {
+                    // Ocultar tarefas concluídas
+                    card.style.display = 'none';
+                }
+            }
+        });
+        
+        // Atualizar ícone e texto do botão
+        if (mostrarConcluidas) {
+            filtroIcon.className = 'fas fa-eye-slash';
+            filtroTexto.textContent = 'Ocultar concluídas';
+        } else {
+            filtroIcon.className = 'fas fa-filter';
+            filtroTexto.textContent = 'Mostrar concluídas';
+        }
+    }
+    
+    // Aplicar filtro ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        const mostrarConcluidas = localStorage.getItem('mostrar_tarefas_concluidas') === 'true';
+        aplicarFiltroTarefas(mostrarConcluidas);
+    });
+    
+    // ============================================
+    // FUNÇÕES PARA CONTROLAR POP-UPS DE ALERTA
+    // ============================================
+    function mostrarAlerta(id) {
+        const popup = document.getElementById(id);
+        if (popup) {
+            popup.style.display = 'flex';
+            // Previne scroll do body quando pop-up está aberto
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function fecharAlerta(id) {
+        const popup = document.getElementById(id);
+        if (popup) {
+            popup.style.display = 'none';
+            // Restaura scroll do body
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Fechar pop-up ao clicar fora dele
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.popup-alerta').forEach(function(popup) {
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    fecharAlerta(popup.id);
+                }
+            });
+        });
+        
+        // Fechar pop-up com tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.popup-alerta').forEach(function(popup) {
+                    if (popup.style.display === 'flex') {
+                        fecharAlerta(popup.id);
+                    }
+                });
+            }
+        });
+    });
+    
     // ============================================
     // VERIFICAÇÃO DE SINCRONIZAÇÃO DE DIA (HOME)
     // ============================================
@@ -472,6 +700,12 @@
                 btn.disabled = true;
             });
             taskCard.classList.add('completed');
+            taskCard.classList.add('task-concluida');
+            taskCard.setAttribute('data-task-status', 'concluida');
+            
+            // Aplicar filtro após concluir tarefa
+            const mostrarConcluidas = localStorage.getItem('mostrar_tarefas_concluidas') === 'true';
+            aplicarFiltroTarefas(mostrarConcluidas);
         }
         
         // Atualiza contadores do dia (se disponível)

@@ -95,13 +95,16 @@ def clonar_tarefa_para_proximo_dia(task):
         data_proximo_dia
     )
     
+    # Conta tarefas pendentes (não concluídas) no próximo dia
+    tarefas_pendentes = day_plan_proximo.tasks.filter(status='pendente').count()
+    
     # Determinar a ordem da nova tarefa (próxima ordem disponível)
     tarefas_existentes = day_plan_proximo.tasks.count()
     nova_ordem = min(tarefas_existentes + 1, 3)  # Máximo 3 tarefas
     
-    # Se já tem 3 tarefas, não cria
-    if tarefas_existentes >= 3:
-        raise ValueError("O dia seguinte já possui 3 tarefas. Não é possível adicionar mais.")
+    # Se já tem 3 tarefas pendentes e não há tarefas concluídas, não cria
+    if tarefas_pendentes >= 3 and day_plan_proximo.tarefas_concluidas == 0:
+        raise ValueError("O dia seguinte já possui 3 tarefas pendentes. Conclua algumas tarefas antes de adicionar mais.")
     
     # Criar nova tarefa copiando campos relevantes
     nova_tarefa = Task.objects.create(

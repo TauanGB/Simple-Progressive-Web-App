@@ -38,6 +38,26 @@ def home(request):
         # Calcular streak
         streak = day_plan.get_streak()
         
+        # Calcular tarefas pendentes de hoje
+        tarefas_pendentes_hoje = day_plan.tasks.filter(status='pendente').count()
+        pode_adicionar_hoje = tarefas_pendentes_hoje < 3 or day_plan.tarefas_concluidas > 0
+        
+        # Verificar plano de amanhã
+        from datetime import timedelta
+        amanha = hoje + timedelta(days=1)
+        try:
+            day_plan_amanha = DayPlan.objects.get(usuario=request.user, data=amanha)
+            tarefas_pendentes_amanha = day_plan_amanha.tasks.filter(status='pendente').count()
+            # Para amanhã: só pode adicionar se tiver menos de 3 tarefas pendentes
+            # (não permite adicionar mesmo que haja tarefas concluídas)
+            pode_adicionar_amanha = tarefas_pendentes_amanha < 3
+            total_tarefas_amanha = day_plan_amanha.total_tarefas
+        except DayPlan.DoesNotExist:
+            day_plan_amanha = None
+            tarefas_pendentes_amanha = 0
+            pode_adicionar_amanha = True
+            total_tarefas_amanha = 0
+        
         context = {
             'day_plan': day_plan,
             'tasks': tasks,
@@ -45,6 +65,11 @@ def home(request):
             'streak': streak,
             'total_tarefas': day_plan.total_tarefas,
             'tarefas_concluidas': day_plan.tarefas_concluidas,
+            'tarefas_pendentes_hoje': tarefas_pendentes_hoje,
+            'pode_adicionar_hoje': pode_adicionar_hoje,
+            'tarefas_pendentes_amanha': tarefas_pendentes_amanha,
+            'pode_adicionar_amanha': pode_adicionar_amanha,
+            'total_tarefas_amanha': total_tarefas_amanha,
         }
         return render(request, 'core/home.html', context)
     
@@ -75,9 +100,12 @@ def criar_tarefa_hoje(request):
         data=hoje
     )
     
-    # Se já tem 3 tarefas, redireciona para home
-    if day_plan.tasks.count() >= 3:
-        messages.info(request, 'Você já tem 3 tarefas para hoje. Use a opção de agendar para criar tarefas em outros dias.')
+    # Conta tarefas pendentes (não concluídas)
+    tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
+    
+    # Se já tem 3 tarefas pendentes e não há tarefas concluídas, redireciona para home
+    if tarefas_pendentes >= 3 and day_plan.tarefas_concluidas == 0:
+        messages.info(request, 'Você já tem 3 tarefas pendentes para hoje. Conclua algumas tarefas ou use a opção de agendar para criar tarefas em outros dias.')
         return redirect('core:home')
     
     if request.method == 'POST':
@@ -99,9 +127,12 @@ def criar_tarefa_hoje(request):
                 data_escolhida
             )
             
-            # Verificar se o DayPlan de destino já tem 3 tarefas
-            if day_plan_destino.tasks.count() >= 3:
-                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia.')
+            # Conta tarefas pendentes no destino
+            tarefas_pendentes_destino = day_plan_destino.tasks.filter(status='pendente').count()
+            
+            # Verificar se o DayPlan de destino já tem 3 tarefas pendentes e não há tarefas concluídas
+            if tarefas_pendentes_destino >= 3 and day_plan_destino.tarefas_concluidas == 0:
+                messages.error(request, f'O dia {data_escolhida.strftime("%d/%m/%Y")} já possui 3 tarefas pendentes. Conclua algumas tarefas ou escolha outro dia.')
                 context = {
                     'form': form,
                     'day_plan': day_plan,
@@ -156,9 +187,13 @@ def criar_tarefa_amanha(request):
         data=amanha
     )
     
-    # Verificar se já tem 3 tarefas
-    if day_plan.tasks.count() >= 3:
-        messages.error(request, 'Você já tem 3 tarefas para amanhã. Edite ou exclua uma tarefa existente.')
+    # Conta tarefas pendentes (não concluídas)
+    tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
+    
+    # Para amanhã: não permite adicionar se já tiver 3 tarefas pendentes
+    # (mesmo que haja tarefas concluídas, não pode adicionar mais)
+    if tarefas_pendentes >= 3:
+        messages.error(request, 'Você já tem 3 tarefas pendentes para amanhã. Conclua ou remova algumas tarefas antes de adicionar mais.')
         return redirect('core:home')
     
     if request.method == 'POST':
@@ -214,9 +249,13 @@ def editar_tarefa(request, task_id):
                     nova_data
                 )
                 
-                # Verificar se o DayPlan de destino já tem 3 tarefas
-                if day_plan_destino.tasks.count() >= 3:
-                    messages.error(request, f'O dia {nova_data.strftime("%d/%m/%Y")} já possui 3 tarefas. Escolha outro dia.')
+                # Conta tarefas pendentes no destino (excluindo a tarefa atual se ela já estiver no destino)
+                tarefas_pendentes_destino = day_plan_destino.tasks.filter(status='pendente').exclude(id=task.id).count()
+                
+                # Verificar se o DayPlan de destino já tem 3 tarefas pendentes e não há tarefas concluídas
+                # (se a tarefa atual já está no destino e é pendente, não conta ela)
+                if tarefas_pendentes_destino >= 3 and day_plan_destino.tarefas_concluidas == 0:
+                    messages.error(request, f'O dia {nova_data.strftime("%d/%m/%Y")} já possui 3 tarefas pendentes. Conclua algumas tarefas ou escolha outro dia.')
                     context = {
                         'form': form,
                         'task': task,
@@ -497,8 +536,19 @@ def aplicar_sugestoes_ia(request):
             messages.error(request, 'Nenhuma sugestão selecionada.')
             return redirect('core:criar_tarefa_hoje')
         
-        # Conta tarefas existentes
+        # Conta tarefas existentes e pendentes
         tarefas_existentes = day_plan.tasks.count()
+        tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
+        
+        # Determina quantas tarefas podem ser criadas
+        # Se há tarefas concluídas, pode criar além das 3
+        # Caso contrário, limita a 3 tarefas pendentes
+        if day_plan.tarefas_concluidas > 0:
+            # Se há tarefas concluídas, pode criar quantas quiser (sem limite rígido)
+            limite_criacao = None
+        else:
+            # Se não há tarefas concluídas, limita a 3 tarefas pendentes
+            limite_criacao = 3
         
         # Cria tarefas a partir das sugestões
         # Por simplicidade, vamos receber os dados via JSON ou form
@@ -509,7 +559,12 @@ def aplicar_sugestoes_ia(request):
         descricoes = request.POST.getlist('descricao')
         
         for i, titulo in enumerate(titulos):
-            if titulo.strip() and (tarefas_existentes + i + 1) <= 3:
+            # Verifica se pode criar mais tarefas
+            pode_criar = True
+            if limite_criacao is not None:
+                pode_criar = (tarefas_pendentes + i) < limite_criacao
+            
+            if titulo.strip() and pode_criar:
                 Task.objects.create(
                     day_plan=day_plan,
                     titulo=titulo.strip(),
@@ -525,22 +580,74 @@ def aplicar_sugestoes_ia(request):
 
 
 @login_required
-def historico(request):
-    """Lista o histórico de dias anteriores."""
+def resultados(request):
+    """Dashboard de resultados com métricas dos últimos 30 dias."""
+    hoje = get_current_date()
+    data_inicio = hoje - timedelta(days=30)
+    
+    # Buscar planos dos últimos 30 dias
     day_plans = DayPlan.objects.filter(
-        usuario=request.user
-    ).order_by('-data')[:30]  # Últimos 30 dias
+        usuario=request.user,
+        data__gte=data_inicio,
+        data__lte=hoje
+    ).order_by('-data')
+    
+    # Calcular métricas
+    todas_tarefas = Task.objects.filter(
+        day_plan__usuario=request.user,
+        day_plan__data__gte=data_inicio,
+        day_plan__data__lte=hoje
+    )
+    
+    tarefas_nao_concluidas = todas_tarefas.filter(status='pendente').count()
+    tarefas_progresso_parcial = todas_tarefas.filter(
+        status='pendente',
+        progress_percent__gt=0
+    ).count()
+    
+    tarefas_concluidas_total = todas_tarefas.filter(status='concluida').count()
+    dias_com_atividade = day_plans.filter(tasks__isnull=False).distinct().count()
+    media_tarefas_dia = tarefas_concluidas_total / dias_com_atividade if dias_com_atividade > 0 else 0
+    
+    # Dados para gráficos (evolução diária) - ordenar por data crescente para o gráfico
+    dados_grafico = []
+    day_plans_ordenados = day_plans.order_by('data')  # Ordenar por data crescente para gráfico
+    for plan in day_plans_ordenados:
+        dados_grafico.append({
+            'data': plan.data.strftime('%Y-%m-%d'),
+            'data_formatada': plan.data.strftime('%d/%m'),
+            'concluidas': plan.tarefas_concluidas,
+            'total': plan.total_tarefas,
+            'percentual': plan.percentual_conclusao
+        })
+    
+    # Dados para gráfico de distribuição
+    total_tarefas = todas_tarefas.count()
+    tarefas_concluidas_count = todas_tarefas.filter(status='concluida').count()
+    tarefas_pendentes_sem_progresso = todas_tarefas.filter(
+        status='pendente',
+        progress_percent=0
+    ).count()
     
     # Calcular streak atual
-    hoje = get_current_date()
     try:
         day_plan_hoje = DayPlan.objects.get(usuario=request.user, data=hoje)
         streak = day_plan_hoje.get_streak()
     except DayPlan.DoesNotExist:
         streak = 0
     
-    # Adicionar informações de progresso médio e conquistas para cada plano
-    for plan in day_plans:
+    # Buscar planos para a lista de detalhes (incluindo amanhã, últimos 7 dias)
+    # 7 dias: amanhã, hoje, e 5 dias anteriores = 7 dias no total
+    amanha = hoje + timedelta(days=1)
+    data_inicio_lista = hoje - timedelta(days=5)  # 5 dias atrás + hoje + amanhã = 7 dias
+    day_plans_lista = DayPlan.objects.filter(
+        usuario=request.user,
+        data__gte=data_inicio_lista,
+        data__lte=amanha
+    ).order_by('-data')
+    
+    # Adicionar informações de progresso médio e conquistas para cada plano (apenas os que serão exibidos)
+    for plan in day_plans_lista:
         tasks = plan.tasks.all()
         if tasks.exists():
             total_progress = sum(task.progress_percent for task in tasks)
@@ -552,12 +659,23 @@ def historico(request):
         else:
             plan.progresso_medio = 0
             plan.total_conquistas = 0
+        
+        # Marcar se o dia é anterior a hoje (para status diferente)
+        plan.eh_dia_passado = plan.data < hoje
     
     context = {
-        'day_plans': day_plans,
+        'day_plans': day_plans_lista,
         'streak': streak,
+        'tarefas_nao_concluidas': tarefas_nao_concluidas,
+        'tarefas_progresso_parcial': tarefas_progresso_parcial,
+        'media_tarefas_dia': round(media_tarefas_dia, 1),
+        'dados_grafico': json.dumps(dados_grafico),
+        'tarefas_concluidas_total': tarefas_concluidas_total,
+        'total_tarefas': total_tarefas,
+        'tarefas_concluidas_count': tarefas_concluidas_count,
+        'tarefas_pendentes_sem_progresso': tarefas_pendentes_sem_progresso,
     }
-    return render(request, 'core/historico.html', context)
+    return render(request, 'core/resultados.html', context)
 
 
 @login_required
@@ -571,7 +689,7 @@ def detalhes_dia(request, data_str):
         data_obj = date.fromisoformat(data_str)
     except ValueError:
         messages.error(request, 'Data inválida.')
-        return redirect('core:historico')
+        return redirect('core:resultados')
     
     day_plan = get_object_or_404(
         DayPlan,
@@ -741,6 +859,17 @@ def pwa_debug(request):
 
 def healthz(request):
     return JsonResponse({"status": "ok"})
+
+
+def chrome_devtools_config(request):
+    """
+    Retorna uma resposta vazia para o arquivo de configuração do Chrome DevTools.
+    
+    O Chrome DevTools tenta acessar este arquivo para configurações específicas
+    de PWA. Como não é necessário para o funcionamento da aplicação, retornamos
+    um JSON vazio para evitar warnings 404 no log.
+    """
+    return JsonResponse({}, status=200)
 
 
 @login_required

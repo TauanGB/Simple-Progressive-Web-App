@@ -151,9 +151,9 @@
             <span class="nav-icon">📅</span>
             <span>Hoje</span>
         </a>
-        <a href="{% url 'core:historico' %}" class="{% if request.resolver_match.url_name == 'historico' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
+        <a href="{% url 'core:resultados' %}" class="{% if request.resolver_match.url_name == 'resultados' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
             <span class="nav-icon">📊</span>
-            <span>Histórico</span>
+            <span>Resultados</span>
         </a>
         <a href="{% url 'core:revisao_dia' %}" class="{% if request.resolver_match.url_name == 'revisao_dia' %}active{% endif %}">
             <span class="nav-icon">✍️</span>

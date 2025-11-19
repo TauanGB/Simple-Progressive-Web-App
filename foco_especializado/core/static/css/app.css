@@ -108,6 +108,11 @@
     --streak-border: #F59E0B;
     --streak-text: #92400E;
     --streak-label: #78350F;
+    
+    /* Cores de alerta de aviso (tema claro) */
+    --alert-warning-bg: #FEF3C7;
+    --alert-warning-text: #92400E;
+    --alert-warning-border: #F59E0B;
 }
 
 /* ============================================
@@ -164,6 +169,11 @@
     --streak-border: #F59E0B;
     --streak-text: #FEF3C7;
     --streak-label: #FDE68A;
+    
+    /* Cores de alerta de aviso (ajustadas para tema escuro) */
+    --alert-warning-bg: #78350F;
+    --alert-warning-text: #FEF3C7;
+    --alert-warning-border: #F59E0B;
 }
 
 /* ============================================
@@ -1303,5 +1313,162 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
     .app-header .theme-toggle-container {
         margin-left: var(--spacing-md);
     }
+}
+
+/* ============================================
+   CLASSES UTILITÁRIAS PARA CORES E FORMULÁRIOS
+   ============================================
+   Classes para substituir estilos inline e garantir
+   compatibilidade com modo noturno.
+*/
+
+/* Cores de texto */
+.text-primary {
+    color: var(--text-color);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-error {
+    color: var(--alert-error-text);
+}
+
+.text-help {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Cores de fundo */
+.bg-light {
+    background-color: var(--border-light);
+    transition: background-color 0.3s ease;
+}
+
+/* Labels de formulário */
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+/* Textos de ajuda em formulários */
+.form-help-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+/* Textos de erro em formulários */
+.form-error-text {
+    color: var(--alert-error-text);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    transition: color 0.3s ease;
+}
+
+/* Container para switch de agendamento */
+.switch-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: var(--border-light);
+    border-radius: var(--radius-md);
+    transition: background-color 0.3s ease;
+}
+
+.switch-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.switch-label-text {
+    font-weight: 500;
+    color: var(--text-color);
+    transition: color 0.3s ease;
+}
+
+.switch-help-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    margin-left: 3.25rem;
+    transition: color 0.3s ease;
+}
+
+/* Card de aviso (warning) com suporte a dark mode */
+.alert-warning {
+    background: var(--alert-warning-bg);
+    border: 2px solid var(--alert-warning-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.alert-warning h2,
+.alert-warning h3 {
+    color: var(--alert-warning-text);
+    transition: color 0.3s ease;
+}
+
+.alert-warning p,
+.alert-warning li {
+    color: var(--alert-warning-text);
+    transition: color 0.3s ease;
+}
+
+.alert-warning strong {
+    color: var(--alert-warning-text);
+    transition: color 0.3s ease;
+}
+
+/* Listas com suporte a dark mode */
+.list-disc {
+    list-style: disc;
+    padding-left: 1.5rem;
+    line-height: 1.8;
+}
+
+.list-disc li {
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+}
+
+/* Espaçamento flexível */
+.flex-gap {
+    display: flex;
+    gap: 1rem;
+}
+
+.flex-gap-lg {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-col-gap {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Texto requerido (asterisco vermelho) */
+.text-required {
+    color: var(--danger-color);
 }
 

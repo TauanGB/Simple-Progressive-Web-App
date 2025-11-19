@@ -20,8 +20,8 @@ urlpatterns = [
     path('tarefa/<int:task_id>/detalhes/', views.detalhes_tarefa, name='detalhes_tarefa'),
     path('sugerir-tarefas-ia/', views.sugerir_tarefas_ia, name='sugerir_tarefas_ia'),
     path('aplicar-sugestoes-ia/', views.aplicar_sugestoes_ia, name='aplicar_sugestoes_ia'),
-    path('historico/', views.historico, name='historico'),
-    path('historico/<str:data_str>/', views.detalhes_dia, name='detalhes_dia'),
+    path('resultados/', views.resultados, name='resultados'),
+    path('resultados/<str:data_str>/', views.detalhes_dia, name='detalhes_dia'),
     path('revisao/', views.revisao_dia, name='revisao_dia'),
     path('sobre/', views.sobre, name='sobre'),
     path('offline/', views.offline, name='offline'),
@@ -30,5 +30,7 @@ urlpatterns = [
     path('manifest.json', views.manifest, name='manifest'),
     path('service-worker.js', views.service_worker, name='service_worker'),
     path('pwa-debug/', views.pwa_debug, name='pwa_debug'),
+    # Configuração do Chrome DevTools (evita warnings 404)
+    path('.well-known/appspecific/com.chrome.devtools.json', views.chrome_devtools_config, name='chrome_devtools_config'),
 ]
 

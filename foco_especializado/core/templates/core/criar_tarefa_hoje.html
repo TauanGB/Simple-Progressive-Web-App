@@ -24,77 +24,77 @@
                 {% csrf_token %}
                 
                 <!-- Switch: Agendar para outro dia? -->
-                <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #F3F4F6; border-radius: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                <div class="switch-container">
+                    <label class="switch-label">
                         <input type="checkbox" 
                                id="switch-agendar" 
                                name="agendar_outro_dia"
                                style="width: 2.5rem; height: 1.5rem; cursor: pointer;"
                                onchange="toggleCampoData()">
-                        <span style="font-weight: 500; color: #374151;">
+                        <span class="switch-label-text">
                             Agendar para outro dia?
                         </span>
                     </label>
-                    <p style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem; margin-left: 3.25rem;">
+                    <p class="switch-help-text">
                         Quando ativado, você pode escolher uma data diferente de hoje.
                     </p>
                 </div>
 
                 <!-- Campo de data (oculto por padrão) -->
                 <div id="campo-data-container" style="display: none; margin-bottom: 1.5rem;">
-                    <label for="{{ form.data_da_tarefa.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.data_da_tarefa.id_for_label }}" class="form-label">
                         {{ form.data_da_tarefa.label }}
                     </label>
                     {{ form.data_da_tarefa }}
                     {% if form.data_da_tarefa.help_text %}
-                        <p class="text-gray-500 text-sm mt-1">{{ form.data_da_tarefa.help_text }}</p>
+                        <p class="form-help-text">{{ form.data_da_tarefa.help_text }}</p>
                     {% endif %}
                     {% if form.data_da_tarefa.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.data_da_tarefa.errors }}</p>
+                        <p class="form-error-text">{{ form.data_da_tarefa.errors }}</p>
                     {% endif %}
                 </div>
                 
                 <!-- Título da Tarefa -->
                 <div>
-                    <label for="{{ form.titulo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        {{ form.titulo.label }} <span style="color: #EF4444;">*</span>
+                    <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                        {{ form.titulo.label }} <span class="text-required">*</span>
                     </label>
                     {{ form.titulo }}
                     {% if form.titulo.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.titulo.errors }}</p>
+                        <p class="form-error-text">{{ form.titulo.errors }}</p>
                     {% endif %}
-                    <p class="text-gray-500 text-sm mt-1">
+                    <p class="form-help-text">
                         Seja específico e claro. Ex.: "Estudar capítulo 3 por 30 minutos"
                     </p>
                 </div>
 
                 <!-- Descrição -->
                 <div>
-                    <label for="{{ form.descricao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.descricao.id_for_label }}" class="form-label">
                         {{ form.descricao.label }}
                     </label>
                     {{ form.descricao }}
                     {% if form.descricao.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.descricao.errors }}</p>
+                        <p class="form-error-text">{{ form.descricao.errors }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Total de Etapas -->
                 <div>
-                    <label for="{{ form.total_steps.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.total_steps.id_for_label }}" class="form-label">
                         {{ form.total_steps.label }}
                     </label>
                     {{ form.total_steps }}
                     {% if form.total_steps.help_text %}
-                        <p class="text-gray-500 text-sm mt-1">{{ form.total_steps.help_text }}</p>
+                        <p class="form-help-text">{{ form.total_steps.help_text }}</p>
                     {% endif %}
                     {% if form.total_steps.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.total_steps.errors }}</p>
+                        <p class="form-error-text">{{ form.total_steps.errors }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Botões -->
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <div class="flex-gap" style="margin-top: 2rem;">
                     <button type="submit" class="btn btn-primary btn-block">
                         Salvar Tarefa
                     </button>
