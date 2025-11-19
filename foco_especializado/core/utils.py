@@ -2,7 +2,51 @@
 Funções utilitárias para o app de foco diário.
 """
 from django.utils import timezone
-from .models import DayPlan
+from datetime import datetime
+
+# ============================================================================
+# CONFIGURAÇÃO TEMPORÁRIA PARA TESTES
+# ============================================================================
+# Flag para usar horário local da máquina ao invés do timezone do Django
+# ATENÇÃO: Esta é uma configuração TEMPORÁRIA apenas para testes!
+# Para ativar: defina USE_LOCAL_TIME_FOR_TESTING = True
+# Para desativar: defina USE_LOCAL_TIME_FOR_TESTING = False
+USE_LOCAL_TIME_FOR_TESTING = True  # Mude para False quando terminar os testes
+# ============================================================================
+
+def get_current_date():
+    """
+    Retorna a data atual.
+    
+    Se USE_LOCAL_TIME_FOR_TESTING estiver True, usa o horário local da máquina.
+    Caso contrário, usa o timezone configurado no Django.
+    
+    Returns:
+        date: Data atual
+    """
+    if USE_LOCAL_TIME_FOR_TESTING:
+        # Usa horário local da máquina (sem timezone)
+        return datetime.now().date()
+    else:
+        # Usa timezone configurado no Django
+        return timezone.now().date()
+
+def get_current_datetime():
+    """
+    Retorna o datetime atual.
+    
+    Se USE_LOCAL_TIME_FOR_TESTING estiver True, usa o horário local da máquina.
+    Caso contrário, usa o timezone configurado no Django.
+    
+    Returns:
+        datetime: Datetime atual
+    """
+    if USE_LOCAL_TIME_FOR_TESTING:
+        # Usa horário local da máquina (sem timezone)
+        return datetime.now()
+    else:
+        # Usa timezone configurado no Django
+        return timezone.now()
 
 
 def obter_ou_criar_day_plan(usuario, data):
@@ -16,6 +60,9 @@ def obter_ou_criar_day_plan(usuario, data):
     Returns:
         Tupla (DayPlan, created) onde created é True se foi criado agora
     """
+    # Importação local para evitar importação circular
+    from .models import DayPlan
+    
     day_plan, created = DayPlan.objects.get_or_create(
         usuario=usuario,
         data=data

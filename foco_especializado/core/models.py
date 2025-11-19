@@ -8,6 +8,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from .utils import get_current_date, get_current_datetime
 
 
 class DayPlan(models.Model):
@@ -85,7 +86,7 @@ class DayPlan(models.Model):
         pelo menos 1 tarefa concluída).
         """
         streak = 0
-        data_atual = timezone.now().date()
+        data_atual = get_current_date()
         
         # Verifica se hoje tem pelo menos 1 tarefa concluída
         if self.data == data_atual and self.tarefas_concluidas > 0:
@@ -224,7 +225,7 @@ class Task(models.Model):
                 self.concluida_em = None
             # Se status é 'concluida' mas não tem concluida_em, define agora
             if self.status == 'concluida' and not self.concluida_em:
-                self.concluida_em = timezone.now()
+                self.concluida_em = get_current_datetime()
         
         # Calcula progresso automaticamente
         if self.status != 'concluida':
@@ -301,7 +302,7 @@ class Task(models.Model):
             self.completed_steps = self.total_steps
         
         if not self.concluida_em:
-            self.concluida_em = timezone.now()
+            self.concluida_em = get_current_datetime()
         
         self.save()
         return True

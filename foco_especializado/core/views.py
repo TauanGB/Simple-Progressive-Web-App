@@ -19,7 +19,7 @@ from django import forms
 from .models import DayPlan, Task
 from .ai_service import sugerir_tarefas_por_ia
 from .forms import DayPlanForm, TaskForm, RevisaoDiaForm
-from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia
+from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia, get_current_date, get_current_datetime
 
 
 @login_required
@@ -29,7 +29,7 @@ def home(request):
     
     Se não existir plano para hoje, redireciona para criação.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     
     try:
         day_plan = DayPlan.objects.get(usuario=request.user, data=hoje)
@@ -66,7 +66,7 @@ def criar_tarefa_hoje(request):
     - Mostra campo de seleção de data
     - Permite escolher qualquer data (padrão: amanhã)
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     from datetime import timedelta
     
     # Verifica se já existe plano para hoje
@@ -146,7 +146,7 @@ def criar_tarefa_amanha(request):
     
     Não exibe calendário, sempre cria para o dia seguinte.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     from datetime import timedelta
     amanha = hoje + timedelta(days=1)
     
@@ -479,7 +479,7 @@ def aplicar_sugestoes_ia(request):
     """
     Aplica as sugestões de IA criando tarefas no plano do dia.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     
     day_plan, created = DayPlan.objects.get_or_create(
         usuario=request.user,
@@ -529,7 +529,7 @@ def historico(request):
     ).order_by('-data')[:30]  # Últimos 30 dias
     
     # Calcular streak atual
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     try:
         day_plan_hoje = DayPlan.objects.get(usuario=request.user, data=hoje)
         streak = day_plan_hoje.get_streak()
@@ -588,7 +588,7 @@ def revisao_dia(request):
     
     Registra motivo de não conclusão e comentário/reflexão.
     """
-    hoje = timezone.now().date()
+    hoje = get_current_date()
     
     try:
         day_plan = DayPlan.objects.get(usuario=request.user, data=hoje)
