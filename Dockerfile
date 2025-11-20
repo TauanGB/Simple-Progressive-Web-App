@@ -7,7 +7,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Instalação do pacote tzdata para definir o fuso horário
+RUN apt-get update && apt-get install -y tzdata
+
+# Define o fuso horário para Brasília (GMT-3)
+ENV TZ=America/Sao_Paulo
+
+# Configura a hora do sistema
+RUN dpkg-reconfigure --frontend noninteractive tzdata
+
+RUN apt-get install -y --no-install-recommends \
     ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
