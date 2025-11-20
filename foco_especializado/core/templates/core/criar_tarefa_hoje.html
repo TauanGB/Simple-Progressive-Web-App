@@ -128,17 +128,74 @@
                 // Definir data padrão como amanhã se não tiver valor
                 if (campoData && !campoData.value) {
                     const hoje = new Date();
+                    
                     // Calcula amanhã no timezone do servidor (America/Sao_Paulo)
-                    const formatter = new Intl.DateTimeFormat('en-CA', {
-                        timeZone: 'America/Sao_Paulo',
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    });
-                    // Cria uma data para amanhã
-                    const amanha = new Date(hoje);
-                    amanha.setDate(amanha.getDate() + 1);
-                    campoData.value = formatter.format(amanha);
+                    // Método robusto: obtém a data de hoje em Brasília, adiciona 1 dia
+                    function getTomorrowInBrasilia() {
+                        try {
+                            // Obtém a data de hoje em Brasília
+                            const todayStr = hoje.toLocaleString('en-US', {
+                                timeZone: 'America/Sao_Paulo',
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit'
+                            });
+                            
+                            // Extrai componentes da data
+                            const parts = todayStr.split(',');
+                            if (parts.length >= 1) {
+                                const datePart = parts[0].trim();
+                                const dateComponents = datePart.split('/');
+                                if (dateComponents.length === 3) {
+                                    const month = parseInt(dateComponents[0], 10);
+                                    const day = parseInt(dateComponents[1], 10);
+                                    const year = parseInt(dateComponents[2], 10);
+                                    
+                                    // Cria uma data para amanhã
+                                    const tomorrow = new Date(year, month - 1, day + 1);
+                                    
+                                    // Formata no formato YYYY-MM-DD
+                                    const yearStr = tomorrow.getFullYear();
+                                    const monthStr = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                                    const dayStr = String(tomorrow.getDate()).padStart(2, '0');
+                                    
+                                    return `${yearStr}-${monthStr}-${dayStr}`;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('[Date] Erro ao calcular amanhã, usando método alternativo:', e);
+                        }
+                        
+                        // Método alternativo: usa formatter
+                        try {
+                            const formatter = new Intl.DateTimeFormat('en-US', {
+                                timeZone: 'America/Sao_Paulo',
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit'
+                            });
+                            
+                            // Adiciona 1 dia (em milissegundos)
+                            const tomorrow = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
+                            const parts = formatter.formatToParts(tomorrow);
+                            const year = parts.find(p => p.type === 'year').value;
+                            const month = parts.find(p => p.type === 'month').value;
+                            const day = parts.find(p => p.type === 'day').value;
+                            
+                            return `${year}-${month}-${day}`;
+                        } catch (e2) {
+                            console.error('[Date] Erro ao usar formatter alternativo:', e2);
+                            // Fallback: usa data local + 1 dia
+                            const tomorrow = new Date(hoje);
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            const year = tomorrow.getFullYear();
+                            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                            const day = String(tomorrow.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        }
+                    }
+                    
+                    campoData.value = getTomorrowInBrasilia();
                 }
             } else {
                 // Switch desativado: ocultar campo de data

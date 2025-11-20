@@ -230,15 +230,60 @@
              */
             function getCurrentDateString() {
                 const now = new Date();
-                // Usa Intl.DateTimeFormat para obter a data no timezone do servidor (America/Sao_Paulo)
-                const formatter = new Intl.DateTimeFormat('en-CA', {
-                    timeZone: 'America/Sao_Paulo',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-                // Retorna no formato YYYY-MM-DD
-                return formatter.format(now);
+                
+                // Método mais robusto: usa toLocaleString com timezone específico
+                // e depois extrai os componentes da data
+                try {
+                    // Cria uma string formatada no timezone de Brasília
+                    const dateStr = now.toLocaleString('en-US', {
+                        timeZone: 'America/Sao_Paulo',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    });
+                    
+                    // Extrai a data (formato: MM/DD/YYYY, HH:MM:SS)
+                    // Divide por vírgula para separar data e hora
+                    const parts = dateStr.split(',');
+                    if (parts.length >= 1) {
+                        const datePart = parts[0].trim(); // MM/DD/YYYY
+                        const dateComponents = datePart.split('/');
+                        if (dateComponents.length === 3) {
+                            const month = dateComponents[0].padStart(2, '0');
+                            const day = dateComponents[1].padStart(2, '0');
+                            const year = dateComponents[2];
+                            // Retorna no formato YYYY-MM-DD
+                            return `${year}-${month}-${day}`;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Date Sync] Erro ao usar toLocaleString, tentando método alternativo:', e);
+                }
+                
+                // Método alternativo: usa Intl.DateTimeFormat com partes separadas
+                try {
+                    const formatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: 'America/Sao_Paulo',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+                    
+                    const parts = formatter.formatToParts(now);
+                    const year = parts.find(p => p.type === 'year').value;
+                    const month = parts.find(p => p.type === 'month').value;
+                    const day = parts.find(p => p.type === 'day').value;
+                    
+                    return `${year}-${month}-${day}`;
+                } catch (e2) {
+                    console.error('[Date Sync] Erro ao usar formatter alternativo:', e2);
+                    // Último recurso: retorna data vazia (será tratado pelo código que chama)
+                    return '';
+                }
             }
             
             /**
