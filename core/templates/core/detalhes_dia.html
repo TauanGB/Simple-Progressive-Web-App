@@ -79,12 +79,6 @@
                                         Pendente
                                     {% endif %}
                                 </span>
-                                {% if task.status == 'concluida' and task.moments.exists %}
-                                    <a href="{% url 'core:detalhes_tarefa' task.id %}" style="display: inline-flex; align-items: center; gap: 0.25rem; color: #4F46E5; text-decoration: none; font-size: 0.875rem;">
-                                        <i class="fas fa-camera"></i>
-                                        <span>{{ task.moments.count }} conquista{{ task.moments.count|pluralize }}</span>
-                                    </a>
-                                {% endif %}
                             </div>
                         </div>
                     </div>

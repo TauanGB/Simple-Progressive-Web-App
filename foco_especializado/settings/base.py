@@ -34,6 +34,9 @@ DEBUG = _get_bool_env("DEBUG", False)
 SECRET_KEY = os.getenv("SECRET_KEY") or "dev-insecure-key"
 ALLOWED_HOSTS = _get_csv_env("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 
+# Tipo padrão de campo Auto para novas migrações (BigAutoField para melhor compatibilidade)
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # -----------------------------------------------------------------------------
 # Aplicações
 # -----------------------------------------------------------------------------
@@ -56,6 +59,8 @@ INSTALLED_APPS = [
 # - corsheaders antes de CommonMiddleware
 # -----------------------------------------------------------------------------
 MIDDLEWARE = [
+    # Middleware customizado para PWA - deve rodar ANTES dos middlewares de segurança
+    "core.middleware.AllowedHostsPermitPWAMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -65,6 +70,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.PWAPublicAccessMiddleware",
 ]
 
 ROOT_URLCONF = "foco_especializado.urls"
@@ -205,6 +211,45 @@ CORS_ALLOWED_ORIGINS = _get_csv_env("CORS_ALLOWED_ORIGINS", _default_cors)
 CSRF_TRUSTED_ORIGINS = _get_csv_env("CSRF_TRUSTED_ORIGINS", _default_csrf)
 
 # Em DEV (definido em dev.py) adicionamos localhost se vazios
+
+# Configurações de HTTPS/Segurança para proxies (importante para Codespaces)
+# Django deve confiar em headers X-Forwarded-Proto para saber se foi via HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# Em produção, ativa HTTPS obrigatório
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# CORS para arquivos do PWA - permite acesso por qualquer origem
+CORS_ALLOW_ALL_ORIGINS = _get_bool_env("CORS_ALLOW_ALL_ORIGINS", False)
+
+# Endpoints que devem estar públicos e sem restrições CORS
+CORS_PUBLIC_PATHS = [
+    '/manifest.json',
+    '/service-worker.js',
+    '/offline/',
+    '/static/',
+]
+
+# Allow credentials para requests com autenticação
+CORS_ALLOW_CREDENTIALS = True
+
+# Headers permitidos
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # -----------------------------------------------------------------------------
 # Logging

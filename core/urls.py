@@ -16,7 +16,6 @@ urlpatterns = [
     path('tarefa/<int:task_id>/concluir/', views.concluir_tarefa, name='concluir_tarefa'),
     path('tarefa/<int:task_id>/deletar/', views.deletar_tarefa, name='deletar_tarefa'),
     path('tarefa/<int:task_id>/adicionar-dia-seguinte/', views.adicionar_ao_dia_seguinte, name='adicionar_ao_dia_seguinte'),
-    path('tarefa/<int:task_id>/registrar-conquista/', views.registrar_conquista, name='registrar_conquista'),
     path('tarefa/<int:task_id>/detalhes/', views.detalhes_tarefa, name='detalhes_tarefa'),
     path('sugerir-tarefas-ia/', views.sugerir_tarefas_ia, name='sugerir_tarefas_ia'),
     path('aplicar-sugestoes-ia/', views.aplicar_sugestoes_ia, name='aplicar_sugestoes_ia'),

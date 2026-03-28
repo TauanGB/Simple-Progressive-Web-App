@@ -690,6 +690,7 @@ input[type="password"],
 input[type="number"],
 input[type="date"],
 textarea,
+option,
 select {
     width: 100%;
     padding: var(--spacing-md);

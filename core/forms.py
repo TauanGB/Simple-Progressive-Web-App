@@ -2,7 +2,7 @@
 Formulários para o app de foco diário.
 """
 from django import forms
-from .models import DayPlan, Task, TaskMoment
+from .models import DayPlan, Task
 from .utils import get_current_date
 
 
@@ -159,37 +159,4 @@ class RevisaoDiaForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-
-class TaskMomentForm(forms.ModelForm):
-    """Formulário para registrar uma conquista/momento de uma tarefa."""
-    
-    class Meta:
-        model = TaskMoment
-        fields = ['image', 'caption']
-        widgets = {
-            'image': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': 'image/*',
-                'capture': 'environment',
-            }),
-            'caption': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Legenda opcional (ex.: "Finalizei o projeto!")',
-                'maxlength': 200,
-            }),
-        }
-        labels = {
-            'image': 'Imagem da Conquista',
-            'caption': 'Legenda (opcional)',
-        }
-        help_texts = {
-            'image': 'Escolha uma imagem para registrar este momento especial da tarefa.',
-            'caption': 'Adicione uma legenda curta para descrever este momento.',
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['image'].required = True
-        self.fields['caption'].required = False
 

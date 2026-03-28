@@ -129,11 +129,6 @@
                                 {% if task.status == 'concluida' and task.concluida_em %}
                                     <p class="task-meta">
                                         ✓ Concluída às {{ task.concluida_em|date:"H:i" }}
-                                        {% if task.moments.exists %}
-                                            | <a href="{% url 'core:detalhes_tarefa' task.id %}" style="color: #4F46E5; text-decoration: none;">
-                                                <i class="fas fa-camera"></i> {{ task.moments.count }} conquista{{ task.moments.count|pluralize }}
-                                            </a>
-                                        {% endif %}
                                     </p>
                                 {% endif %}
                             </div>
@@ -844,22 +839,10 @@
             .then(data => {
                 if (data.success) {
                     atualizarProgressoTarefa(taskCard, data);
-                    // Se há URL para registrar conquista, pergunta ao usuário
-                    if (data.registrar_conquista_url) {
-                        if (confirm('Tarefa concluída! Deseja registrar uma conquista com uma foto?')) {
-                            window.location.href = data.registrar_conquista_url;
-                        } else {
-                            // Recarrega após um pequeno delay para atualizar contadores do dia
-                            setTimeout(() => {
-                                location.reload();
-                            }, 500);
-                        }
-                    } else {
-                        // Recarrega após um pequeno delay para atualizar contadores do dia
-                        setTimeout(() => {
-                            location.reload();
-                        }, 500);
-                    }
+                    // Recarrega após um pequeno delay para atualizar contadores do dia
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
                 } else {
                     alert(data.error || 'Erro ao concluir tarefa');
                     button.disabled = false;

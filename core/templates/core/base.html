@@ -47,7 +47,7 @@
 
     {% if PWA_SETTINGS.enabled %}
     <!-- Manifest PWA -->
-    <link rel="manifest" href="{% url 'core:manifest' %}">
+    <link rel="manifest" href="{% url 'core:manifest' %}" crossorigin="anonymous">>
 
     <!-- Apple Touch Icons (para iOS) -->
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
