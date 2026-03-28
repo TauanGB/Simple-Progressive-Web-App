@@ -10,7 +10,7 @@
  * 4. Detecta se o app já está instalado
  * 5. Fornece instruções manuais para iOS/Safari e Android (fallback)
  * 
- * ⚠️ PRODUÇÃO: Em ambiente de produção, é ESSENCIAL servir o app via HTTPS
+ * PRODUÇÃO [fa-exclamation-triangle]: Em ambiente de produção, é ESSENCIAL servir o app via HTTPS
  * para que o PWA funcione corretamente.
  */
 
@@ -245,7 +245,7 @@
           animation: slideUp 0.3s ease-out;
         ">
           <div style="text-align: center; margin-bottom: 20px;">
-            <div style="font-size: 3rem; margin-bottom: 8px;">📱</div>
+            <div style="font-size: 3rem; margin-bottom: 8px;"><i class="fas fa-mobile-alt" style="color: #4F46E5;"></i></div>
             <h2 style="
               font-size: 1.5rem;
               font-weight: 600;
@@ -767,7 +767,7 @@
       if (!closeButton) {
         closeButton = document.createElement('button');
         closeButton.className = 'pwa-install-close';
-        closeButton.innerHTML = '✕';
+        closeButton.innerHTML = '<i class="fas fa-times"></i>';
         closeButton.style.cssText = `
           position: absolute;
           top: 8px;

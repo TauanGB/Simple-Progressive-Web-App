@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login
+from django.contrib.auth import login, logout as auth_logout 
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, FileResponse
@@ -889,7 +889,7 @@ def registrar_conquista(request, task_id):
             task_moment.task = task
             task_moment.save()
             
-            messages.success(request, 'Conquista registrada com sucesso! 🎉')
+            messages.success(request, 'Conquista registrada com sucesso! <i class="fas fa-party-popper"></i>')
             
             # Verifica se veio de uma conclusão recente (parâmetro opcional)
             if request.GET.get('from_complete') == '1':
@@ -925,3 +925,10 @@ def detalhes_tarefa(request, task_id):
         'moments': moments,
     }
     return render(request, 'core/detalhes_tarefa.html', context)
+
+
+def logout(request):
+    """Faz logout do usuário."""
+    auth_logout(request)
+    messages.info(request, 'Você saiu da sua conta.')
+    return redirect('core:home')

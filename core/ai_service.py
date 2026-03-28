@@ -1,7 +1,7 @@
 """
 Serviço de IA para sugestão de tarefas.
 
-⚠️ IMPORTANTE: Este é um STUB/MOCK para o MVP.
+IMPORTANTE [fa-exclamation-triangle]: Este é um STUB/MOCK para o MVP.
 No futuro, substitua a função `sugerir_tarefas_por_ia` por uma chamada
 real a uma API de modelo de linguagem (OpenAI, Anthropic, etc.).
 
@@ -29,7 +29,7 @@ def sugerir_tarefas_por_ia(intencao_vaga: str) -> list[dict]:
             'ordem': int  # 1, 2 ou 3
         }
     
-    ⚠️ ATUALMENTE: Esta é uma implementação stub que retorna sugestões
+    ATUALMENTE [fa-exclamation-triangle]: Esta é uma implementação stub que retorna sugestões
     genéricas baseadas em palavras-chave. Substitua por chamada real de API.
     """
     intencao_lower = intencao_vaga.lower()

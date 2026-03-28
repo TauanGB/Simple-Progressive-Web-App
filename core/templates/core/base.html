@@ -1,60 +1,65 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="{{ PWA_SETTINGS.theme_color }}">
-    <meta name="description" content="App de foco diário para ajudar na organização com poucas tarefas importantes. Ideal para pessoas com TDAH.">
-    
+    <meta name="description"
+        content="App de foco diário para ajudar na organização com poucas tarefas importantes. Ideal para pessoas com TDAH.">
+
     <!-- Meta tags PWA para Apple/iOS -->
     {% if PWA_SETTINGS.enabled %}
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="3 Coisas">
     {% endif %}
-    
+
     <!-- Meta tags PWA para Android/Chrome -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="3 Coisas">
-    
+
     <!-- Meta tags gerais PWA -->
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-TileColor" content="#4F46E5">
-    
+
     <title>{% block title %}3 Coisas de Hoje - Foco Diário{% endblock %}</title>
-    
+
     <!-- Tailwind CSS via CDN (mantido para compatibilidade) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- 
         Font Awesome para ícones autoexplicativos
         Biblioteca: Font Awesome 6.4.0 via CDN
         Uso: Substitui botões de texto por ícones para reduzir poluição visual
         Estilos customizados: app.css (classes .btn-icon, .btn-icon-text, etc.)
     -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- CSS Customizado - Estilos de App Mobile -->
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
-    
+
     <!-- Script de Tema (carrega imediatamente para evitar flash de tema errado) -->
     <script src="{% static 'js/theme.js' %}"></script>
-    
+
     {% if PWA_SETTINGS.enabled %}
     <!-- Manifest PWA -->
     <link rel="manifest" href="{% url 'core:manifest' %}">
-    
+
     <!-- Apple Touch Icons (para iOS) -->
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
     {% endif %}
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192" href="{% static 'icon-192.png' %}">
     <link rel="icon" type="image/png" sizes="512x512" href="{% static 'icon-512.png' %}">
-    
+
     {% block extra_head %}{% endblock %}
 </head>
+
 <body>
     <!-- 
         ============================================
@@ -68,7 +73,7 @@
     <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
         <div class="pwa-install-banner-content">
             <div class="pwa-install-banner-text">
-                <strong>📱 Instale o app</strong>
+                <strong><i class="fas fa-mobile-alt"></i> Instale o app</strong>
                 <span>Adicione à tela inicial para acesso rápido e uso offline</span>
             </div>
             <button id="pwa-install-button" class="btn btn-primary btn-sm" style="display: none;">
@@ -80,11 +85,11 @@
         <span class="hint-text">Compartilhar → Adicionar à Tela de Início</span>
         <div class="hint-actions">
             <button id="ios-install-button" class="btn btn-secondary btn-xs">Instalar no iPhone</button>
-            <button id="ios-hint-dismiss" class="hint-dismiss" aria-label="Fechar">✕</button>
+            <button id="ios-hint-dismiss" class="hint-dismiss" aria-label="Fechar"><i class="fas fa-times"></i></button>
         </div>
     </div>
     {% endif %}
-    
+
     <!-- 
         ============================================
         HEADER SIMPLES (MOBILE-FIRST)
@@ -97,12 +102,15 @@
         <h1>{% block header_title %}Hoje{% endblock %}</h1>
         {% block header_subtitle %}{% endblock %}
         <div class="theme-toggle-container">
-            <button id="theme-toggle" class="theme-toggle" 
-                    aria-label="Alternar modo claro/escuro"
-                    title="Alternar modo claro/escuro">
-                <span class="icon-sun">☀️</span>
-                <span class="icon-moon">🌙</span>
+            <button id="theme-toggle" class="theme-toggle" aria-label="Alternar modo claro/escuro"
+                title="Alternar modo claro/escuro">
+                <span class="icon-sun"><i class="fas fa-sun"></i></span>
+                <span class="icon-moon"><i class="fas fa-moon"></i></span>
             </button>
+            <a href="{% url 'logout' %}" class="logout-button" aria-label="Fazer logout" title="Fazer logout" 
+               onclick="return confirm('Tem certeza que deseja fazer logout?');">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
     </header>
     {% endif %}
@@ -114,13 +122,14 @@
         Mensagens de sucesso/erro do Django.
     -->
     {% if messages %}
-        <div class="app-main">
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+    <div class="app-main">
+        {% for message in messages %}
+        <div
+            class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+            {{ message }}
         </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
     <!-- 
@@ -148,19 +157,21 @@
     {% if user.is_authenticated %}
     <nav class="app-nav-bottom">
         <a href="{% url 'core:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-            <span class="nav-icon">📅</span>
+            <span class="nav-icon"><i class="fas fa-calendar"></i></span>
             <span>Hoje</span>
         </a>
-        <a href="{% url 'core:resultados' %}" class="{% if request.resolver_match.url_name == 'resultados' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
-            <span class="nav-icon">📊</span>
+        <a href="{% url 'core:resultados' %}"
+            class="{% if request.resolver_match.url_name == 'resultados' or request.resolver_match.url_name == 'detalhes_dia' %}active{% endif %}">
+            <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
             <span>Resultados</span>
         </a>
-        <a href="{% url 'core:revisao_dia' %}" class="{% if request.resolver_match.url_name == 'revisao_dia' %}active{% endif %}">
-            <span class="nav-icon">✍️</span>
+        <a href="{% url 'core:revisao_dia' %}"
+            class="{% if request.resolver_match.url_name == 'revisao_dia' %}active{% endif %}">
+            <span class="nav-icon"><i class="fas fa-pen"></i></span>
             <span>Revisão</span>
         </a>
         <a href="{% url 'core:sobre' %}" class="{% if request.resolver_match.url_name == 'sobre' %}active{% endif %}">
-            <span class="nav-icon">ℹ️</span>
+            <span class="nav-icon"><i class="fas fa-info-circle"></i></span>
             <span>Sobre</span>
         </a>
     </nav>
@@ -173,7 +184,7 @@
         Registra o service worker para funcionalidades
         offline e melhor experiência como PWA.
         
-        ⚠️ PRODUÇÃO: Em ambiente de produção, é ESSENCIAL
+        <i class="fas fa-exclamation-triangle"></i> PRODUÇÃO: Em ambiente de produção, é ESSENCIAL
         servir o app via HTTPS para que o service worker
         funcione corretamente.
     -->
@@ -182,12 +193,12 @@
     <script>
         window.__PWA_SETTINGS = JSON.parse(document.getElementById('pwa-settings-data').textContent);
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
+            window.addEventListener('load', function () {
                 navigator.serviceWorker.register('{% url "core:service_worker" %}')
-                    .then(function(registration) {
+                    .then(function (registration) {
                         console.log('[Service Worker] Registrado com sucesso:', registration.scope);
                     })
-                    .catch(function(error) {
+                    .catch(function (error) {
                         console.error('[Service Worker] Falha ao registrar:', error);
                     });
             });
@@ -199,7 +210,7 @@
     <script>
         // Melhorar UX: prevenir zoom em double-tap em mobile
         let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(event) {
+        document.addEventListener('touchend', function (event) {
             const now = Date.now();
             if (now - lastTouchEnd <= 300) {
                 event.preventDefault();
@@ -207,7 +218,7 @@
             lastTouchEnd = now;
         }, false);
     </script>
-    
+
     <!-- 
         ============================================
         VERIFICAÇÃO DE MUDANÇA DE DIA
@@ -216,21 +227,21 @@
         força atualização quando necessário.
     -->
     <script>
-        (function() {
+        (function () {
             'use strict';
-            
+
             const STORAGE_KEY_LAST_DAY = 'app_last_verified_day';
             const STORAGE_KEY_LAST_CHECK = 'app_last_day_check';
             const STORAGE_KEY_OPERATION_IN_PROGRESS = 'app_operation_in_progress';
             const CHECK_INTERVAL_MS = 60000; // Verificar a cada 1 minuto
             const OPERATION_PROTECTION_DELAY_MS = 3000; // Aguardar 3 segundos se houver operação em andamento
-            
+
             /**
              * Obtém a data atual no formato YYYY-MM-DD no timezone do servidor (America/Sao_Paulo)
              */
             function getCurrentDateString() {
                 const now = new Date();
-                
+
                 // Método mais robusto: usa toLocaleString com timezone específico
                 // e depois extrai os componentes da data
                 try {
@@ -245,7 +256,7 @@
                         second: '2-digit',
                         hour12: false
                     });
-                    
+
                     // Extrai a data (formato: MM/DD/YYYY, HH:MM:SS)
                     // Divide por vírgula para separar data e hora
                     const parts = dateStr.split(',');
@@ -263,7 +274,7 @@
                 } catch (e) {
                     console.warn('[Date Sync] Erro ao usar toLocaleString, tentando método alternativo:', e);
                 }
-                
+
                 // Método alternativo: usa Intl.DateTimeFormat com partes separadas
                 try {
                     const formatter = new Intl.DateTimeFormat('en-US', {
@@ -272,12 +283,12 @@
                         month: '2-digit',
                         day: '2-digit'
                     });
-                    
+
                     const parts = formatter.formatToParts(now);
                     const year = parts.find(p => p.type === 'year').value;
                     const month = parts.find(p => p.type === 'month').value;
                     const day = parts.find(p => p.type === 'day').value;
-                    
+
                     return `${year}-${month}-${day}`;
                 } catch (e2) {
                     console.error('[Date Sync] Erro ao usar formatter alternativo:', e2);
@@ -285,14 +296,14 @@
                     return '';
                 }
             }
-            
+
             /**
              * Obtém o último dia verificado do localStorage
              */
             function getLastVerifiedDay() {
                 return localStorage.getItem(STORAGE_KEY_LAST_DAY);
             }
-            
+
             /**
              * Verifica se há operação em andamento
              */
@@ -301,21 +312,21 @@
                 if (!operationFlag) {
                     return false;
                 }
-                
+
                 // Verifica se a flag ainda é válida (não expirou)
                 const timestamp = parseInt(operationFlag, 10);
                 const now = Date.now();
                 const maxAge = 30000; // 30 segundos
-                
+
                 if (isNaN(timestamp) || (now - timestamp) > maxAge) {
                     // Flag expirou, limpa
                     localStorage.removeItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
                     return false;
                 }
-                
+
                 return true;
             }
-            
+
             /**
              * Verifica se há formulários sendo submetidos
              */
@@ -332,7 +343,7 @@
                 }
                 return false;
             }
-            
+
             /**
              * Salva o dia atual no localStorage
              */
@@ -341,30 +352,30 @@
                 localStorage.setItem(STORAGE_KEY_LAST_DAY, today);
                 localStorage.setItem(STORAGE_KEY_LAST_CHECK, Date.now().toString());
             }
-            
+
             /**
              * Verifica se o dia mudou
              */
             function checkDayChange() {
                 const currentDay = getCurrentDateString();
                 const lastVerifiedDay = getLastVerifiedDay();
-                
+
                 // Se não há dia salvo, salva o dia atual e retorna
                 if (!lastVerifiedDay) {
                     saveCurrentDay();
                     return false;
                 }
-                
+
                 // Se o dia mudou, força recarregamento
                 if (currentDay !== lastVerifiedDay) {
                     console.log('[Day Sync] Dia mudou de', lastVerifiedDay, 'para', currentDay);
-                    
+
                     // Verifica se há operação em andamento ou formulário sendo submetido
                     if (isOperationInProgress() || hasFormSubmitting()) {
                         console.log('[Day Sync] Operação em andamento detectada, aguardando antes de recarregar...');
-                        
+
                         // Aguarda um tempo antes de tentar recarregar novamente
-                        setTimeout(function() {
+                        setTimeout(function () {
                             // Verifica novamente se ainda há operação em andamento
                             if (!isOperationInProgress() && !hasFormSubmitting()) {
                                 console.log('[Day Sync] Operação concluída, recarregando página...');
@@ -372,25 +383,25 @@
                             } else {
                                 // Se ainda há operação, agenda nova tentativa
                                 console.log('[Day Sync] Operação ainda em andamento, tentando novamente em', OPERATION_PROTECTION_DELAY_MS, 'ms');
-                                setTimeout(function() {
+                                setTimeout(function () {
                                     checkDayChange();
                                 }, OPERATION_PROTECTION_DELAY_MS);
                             }
                         }, OPERATION_PROTECTION_DELAY_MS);
-                        
+
                         return true;
                     }
-                    
+
                     // Se não há operação em andamento, recarrega imediatamente
                     performDayChangeReload(currentDay);
                     return true;
                 }
-                
+
                 // Atualiza timestamp da última verificação
                 localStorage.setItem(STORAGE_KEY_LAST_CHECK, Date.now().toString());
                 return false;
             }
-            
+
             /**
              * Executa o recarregamento quando o dia muda
              */
@@ -403,7 +414,7 @@
                     'pwa_first_boot_pending_toast',
                     STORAGE_KEY_OPERATION_IN_PROGRESS // Mantém flag de operação temporariamente
                 ];
-                
+
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
@@ -412,10 +423,10 @@
                     }
                 }
                 keysToRemove.forEach(key => localStorage.removeItem(key));
-                
+
                 // Salva o novo dia
                 saveCurrentDay();
-                
+
                 // Força recarregamento completo da página
                 // Usa window.location.reload(true) para forçar bypass do cache
                 if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -425,13 +436,13 @@
                         newDay: currentDay
                     });
                 }
-                
+
                 // Recarrega a página após um pequeno delay para garantir que a mensagem foi enviada
-                setTimeout(function() {
+                setTimeout(function () {
                     window.location.reload(true);
                 }, 100);
             }
-            
+
             /**
              * Calcula o tempo até a próxima meia-noite
              */
@@ -441,71 +452,71 @@
                 midnight.setHours(24, 0, 0, 0);
                 return midnight.getTime() - now.getTime();
             }
-            
+
             /**
              * Configura verificação periódica
              */
             function setupPeriodicCheck() {
                 // Verifica imediatamente ao carregar
                 checkDayChange();
-                
+
                 // Verifica periodicamente enquanto a página está ativa
-                let checkInterval = setInterval(function() {
+                let checkInterval = setInterval(function () {
                     if (!document.hidden) {
                         checkDayChange();
                     }
                 }, CHECK_INTERVAL_MS);
-                
+
                 // Verifica quando a página volta ao foco
-                document.addEventListener('visibilitychange', function() {
+                document.addEventListener('visibilitychange', function () {
                     if (!document.hidden) {
                         checkDayChange();
                     }
                 });
-                
+
                 // Configura timer para verificar exatamente na meia-noite
                 const msUntilMidnight = getMsUntilMidnight();
-                setTimeout(function() {
+                setTimeout(function () {
                     checkDayChange();
                     // Após meia-noite, configura verificação a cada minuto por 1 hora
                     // para garantir que detecta a mudança mesmo se o timer falhar
-                    const postMidnightInterval = setInterval(function() {
+                    const postMidnightInterval = setInterval(function () {
                         if (checkDayChange()) {
                             clearInterval(postMidnightInterval);
                         }
                         // Para após 1 hora (60 minutos)
-                        setTimeout(function() {
+                        setTimeout(function () {
                             clearInterval(postMidnightInterval);
                         }, 60 * 60 * 1000);
                     }, CHECK_INTERVAL_MS);
                 }, msUntilMidnight);
             }
-            
+
             // Inicializa quando o DOM estiver pronto
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', setupPeriodicCheck);
             } else {
                 setupPeriodicCheck();
             }
-            
+
             // Monitora submissão de formulários para proteger contra recarregamento durante operações
-            document.addEventListener('submit', function(e) {
+            document.addEventListener('submit', function (e) {
                 const form = e.target;
                 if (form && form.tagName === 'FORM') {
                     // Marca que há operação em andamento
                     localStorage.setItem(STORAGE_KEY_OPERATION_IN_PROGRESS, Date.now().toString());
-                    
+
                     // Remove a flag após 10 segundos (tempo máximo esperado para uma operação)
-                    setTimeout(function() {
+                    setTimeout(function () {
                         localStorage.removeItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
                     }, 10000);
                 }
             });
-            
+
             // Limpa flag de operação quando a página carrega (caso tenha ficado de uma sessão anterior)
-            window.addEventListener('load', function() {
+            window.addEventListener('load', function () {
                 // Aguarda 1 segundo antes de limpar, para dar tempo de operações assíncronas
-                setTimeout(function() {
+                setTimeout(function () {
                     const operationFlag = localStorage.getItem(STORAGE_KEY_OPERATION_IN_PROGRESS);
                     if (operationFlag) {
                         const timestamp = parseInt(operationFlag, 10);
@@ -521,5 +532,5 @@
     </script>
     {% block extra_js %}{% endblock %}
 </body>
-</html>
 
+</html>

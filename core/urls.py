@@ -30,7 +30,6 @@ urlpatterns = [
     path('manifest.json', views.manifest, name='manifest'),
     path('service-worker.js', views.service_worker, name='service_worker'),
     path('pwa-debug/', views.pwa_debug, name='pwa_debug'),
-    # Configuração do Chrome DevTools (evita warnings 404)
-    path('.well-known/appspecific/com.chrome.devtools.json', views.chrome_devtools_config, name='chrome_devtools_config'),
+    path('logout/', views.logout, name='logout'),
 ]
 

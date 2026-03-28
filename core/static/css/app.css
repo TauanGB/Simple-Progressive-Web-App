@@ -125,12 +125,13 @@
 :root[data-theme="dark"] {
     /* Cores de fundo (tons suavizados, não preto puro) */
     --bg-color: #1E293B;
-    --bg-card: #334155;
+    --bg-card: #33415518;
     --bg-nav: #1E293B;
     --bg-header: #1E293B;
     
     /* Cores de texto (branco suavizado) */
-    --text-color: #F1F5F9;
+    --text-color: #ffffff;
+    --text-input-color: #000000;
     --text-secondary: #CBD5E1;
     --text-muted: #94A3B8;
     
@@ -697,7 +698,7 @@ select {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background-color: var(--bg-card);
-    color: var(--text-color);
+    color: var(--text-input-color);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
     /* Garantir altura mínima para toque fácil */
     min-height: 44px;
@@ -1270,6 +1271,52 @@ body:has(.pwa-install-banner:not([style*="display: none"])) .app-header {
 .theme-toggle:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* ============================================
+   BOTÃO DE LOGOUT
+   ============================================
+   Replica o estilo do theme-toggle para manter
+   consistência visual no header.
+*/
+
+.logout-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--danger-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.25rem;
+    padding: 0;
+    text-decoration: none;
+}
+
+.logout-button:hover {
+    background: var(--border-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.logout-button:active {
+    transform: translateY(0);
+}
+
+.logout-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.logout-button i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Ícone do sol (modo claro) */

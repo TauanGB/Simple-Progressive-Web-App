@@ -45,11 +45,11 @@
                 <!-- Mensagem motivacional condicional -->
                 <p style="margin-top: 1rem; font-size: 0.875rem;" class="text-muted">
                     {% if tarefas_concluidas == 0 %}
-                        💪 Vamos começar com algo pequeno?
+                        <i class="fas fa-fist-raised"></i> Vamos começar com algo pequeno?
                     {% elif tarefas_concluidas < total_tarefas %}
-                        🚀 Você já começou, continue no ritmo!
+                        <i class="fas fa-rocket"></i> Você já começou, continue no ritmo!
                     {% elif tarefas_concluidas == total_tarefas %}
-                        🎉 Mandou bem! Dia completo!
+                        <i class="fas fa-party-popper"></i> Mandou bem! Dia completo!
                     {% endif %}
                 </p>
             </div>
@@ -64,7 +64,7 @@
         -->
         {% if streak > 0 %}
         <div class="streak-card fade-in">
-            <div class="streak-number">🔥 {{ streak }}</div>
+            <div class="streak-number"><i class="fas fa-fire"></i> {{ streak }}</div>
             <div class="streak-label">
                 Dia{{ streak|pluralize }} seguido{{ streak|pluralize }} com pelo menos 1 tarefa concluída
             </div>
@@ -220,7 +220,7 @@
                     <div style="text-align: center; padding: 2rem 0;">
                         <p style="margin-bottom: 1rem;" class="text-muted">Você ainda não tem tarefas para hoje.</p>
                         <a href="{% url 'core:criar_tarefa_hoje' %}" class="btn btn-primary">
-                            ➕ Adicionar Tarefa
+                            <i class="fas fa-plus"></i> Adicionar Tarefa
                         </a>
                     </div>
                 {% endfor %}
@@ -323,7 +323,7 @@
         <div class="card fade-in" style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 2px solid #818CF8;">
             <div class="card-body">
                 <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: #3730A3;">
-                    💡 Precisa de ajuda?
+                    <i class="fas fa-lightbulb"></i> Precisa de ajuda?
                 </h3>
                 <p style="font-size: 0.875rem; margin-bottom: 1rem;" class="text-secondary">
                     Precisa de ajuda para definir suas tarefas de hoje? Use nossa sugestão inteligente!
