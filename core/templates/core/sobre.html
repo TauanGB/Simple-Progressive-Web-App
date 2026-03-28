@@ -1,151 +1,62 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Sobre - 3 Coisas de Hoje{% endblock %}
+{% block title %}Sobre - Tarefas do Dia{% endblock %}
 
 {% block header_title %}Sobre{% endblock %}
 
 {% block content %}
-    <!-- 
-        ============================================
-        SOBRE - MOBILE-FIRST
-        ============================================
-        Informações sobre o app, apresentadas em
-        cards para melhor legibilidade em mobile.
-    -->
+    <!-- Sobre: foco do repositório = PWA + Django + tarefas -->
 
-    <!-- O que é este app? -->
     <div class="card fade-in">
         <div class="card-header">
-            <h2 class="card-title">O que é este app?</h2>
+            <h2 class="card-title">Objetivo do projeto</h2>
         </div>
         <div class="card-body">
             <p style="line-height: 1.7; margin-bottom: 1rem;">
-                Este é um aplicativo de apoio para organização e foco diário, desenvolvido especialmente 
-                para pessoas com TDAH ou que enfrentam dificuldades de atenção e concentração.
+                Este repositório é um exemplo <em>didático</em> de <strong>Progressive Web App</strong> com
+                <strong>Django</strong>: o mesmo código serve no navegador e pode ser
+                <strong>instalado</strong> na tela inicial, com <strong>manifest</strong>,
+                <strong>service worker</strong> e página <strong>offline</strong>.
             </p>
             <p style="line-height: 1.7;">
-                Ao invés de listas infinitas de tarefas que podem gerar ansiedade e paralisia, 
-                o app trabalha com o princípio de <strong>poucas tarefas importantes por dia</strong> 
-                (até 3 tarefas de foco).
+                O “contexto de negócio” é propositalmente simples: <strong>até três tarefas por dia</strong>,
+                histórico e revisão — o bastante para CRUD, autenticação e fluxo real, sem esconder o que importa aqui:
+                boas práticas de <strong>PWA</strong>.
             </p>
         </div>
     </div>
 
-    <!-- Princípios de Base -->
     <div class="card fade-in">
         <div class="card-header">
-            <h2 class="card-title">Princípios de Base</h2>
+            <h2 class="card-title">O que você pode demonstrar com este app</h2>
+        </div>
+        <div class="card-body">
+            <ul class="list-disc">
+                <li><strong>Web App Manifest</strong> — nome, ícones, <code>display: standalone</code>, atalhos.</li>
+                <li><strong>Service Worker</strong> — cache de estáticos e fallback quando não há rede.</li>
+                <li><strong>Instalação</strong> — prompt / “Adicionar à tela inicial” e banner no template base.</li>
+                <li><strong>Backend Django</strong> — usuários, modelos e formulários alimentando o front.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">Limitações de propósito</h2>
         </div>
         <div class="card-body">
             <p style="line-height: 1.7; margin-bottom: 1rem;">
-                O app se inspira em princípios usados em terapias e abordagens para TDAH, 
-                focando em:
-            </p>
-            <ul class="list-disc">
-                <li>
-                    <strong>Externalizar funções executivas:</strong> Tirar da cabeça o que é importante e colocar em um lugar visível
-                </li>
-                <li>
-                    <strong>Tarefas pequenas e claras:</strong> Transformar intenções vagas em ações específicas e acionáveis
-                </li>
-                <li>
-                    <strong>Visibilidade do progresso:</strong> Tornar tempo e progresso visíveis através de acompanhamento simples
-                </li>
-                <li>
-                    <strong>Revisão e reflexão:</strong> Ter um momento de revisão diária para aprender e melhorar
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Como Funciona -->
-    <div class="card fade-in">
-        <div class="card-header">
-            <h2 class="card-title">Como Funciona</h2>
-        </div>
-        <div class="card-body">
-            <p style="line-height: 1.7; margin-bottom: 1rem;">
-                Cada dia, você define até 3 tarefas importantes. O app ajuda você a:
-            </p>
-            <ul class="list-disc">
-                <li>
-                    Quebrar intenções vagas em tarefas específicas (com ajuda de IA)
-                </li>
-                <li>
-                    Acompanhar seu progresso ao longo do dia
-                </li>
-                <li>
-                    Manter um histórico para ver padrões e melhorias
-                </li>
-                <li>
-                    Fazer uma revisão rápida do dia para aprender com a experiência
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Aviso Importante -->
-    <div class="card fade-in alert-warning">
-        <div class="card-body">
-            <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">
-                <i class="fas fa-exclamation-triangle"></i> Aviso Importante
-            </h2>
-            <p style="font-weight: 600; margin-bottom: 1rem;">
-                Este aplicativo é uma ferramenta de apoio e organização pessoal.
-            </p>
-            <p style="font-weight: 600; margin-bottom: 0.5rem;">
-                <strong>NÃO substitui:</strong>
-            </p>
-            <ul class="list-disc" style="margin-bottom: 1rem;">
-                <li style="margin-bottom: 0.5rem;">Avaliação profissional</li>
-                <li style="margin-bottom: 0.5rem;">Diagnóstico médico ou psicológico</li>
-                <li style="margin-bottom: 0.5rem;">Tratamento médico ou psicológico</li>
-                <li>Acompanhamento terapêutico</li>
-            </ul>
-            <p style="line-height: 1.7;">
-                Se você suspeita ter TDAH ou enfrenta dificuldades significativas, 
-                procure um profissional de saúde qualificado para avaliação e tratamento adequados.
+                O escopo é intencionalmente pequeno: foco em fluxo de tarefas diário e recursos de PWA.
+                Trata-se de um projeto de portfólio e aprendizado, não de um produto comercial pronto.
             </p>
         </div>
     </div>
 
-    <!-- Versão MVP -->
-    <div class="card fade-in">
-        <div class="card-header">
-            <h2 class="card-title">Versão MVP</h2>
-        </div>
-        <div class="card-body">
-            <p style="line-height: 1.7; margin-bottom: 1rem;">
-                Esta é uma versão MVP (Minimum Viable Product) para testes locais. 
-                Funcionalidades futuras podem incluir:
-            </p>
-            <ul class="list-disc">
-                <li>
-                    Integração completa com APIs de IA para sugestões mais inteligentes
-                </li>
-                <li>
-                    Relatórios e análises de padrões
-                </li>
-                <li>
-                    Notificações e lembretes
-                </li>
-                <li>
-                    Funcionalidades offline completas (PWA)
-                </li>
-                <li>
-                    Personalização avançada
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Botão de voltar -->
     <div style="margin-top: 1.5rem;">
         <a href="{% url 'core:home' %}" class="btn-icon-text btn-icon-text-primary btn-block">
             <i class="fas fa-arrow-left"></i>
-            <span>Voltar para o App</span>
+            <span>Voltar para o app</span>
         </a>
     </div>
 {% endblock %}
-

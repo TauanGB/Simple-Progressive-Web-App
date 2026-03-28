@@ -191,9 +191,9 @@ def generate_from_svg_pillow(svg_path, output_path, size):
         else:
             draw.text((x, y), text, fill=white_color)
         
-        # Desenha "Coisas" BRANCO abaixo do "3" (em TODOS os tamanhos, como no SVG)
+        # Desenha "Dia" BRANCO abaixo do "3" (em TODOS os tamanhos, como no SVG)
         # No SVG: x="256" y="380" font-size="60" (em canvas 512x512)
-        text2 = "Coisas"
+        text2 = "Dia"
         font_size2 = max(10, int(width * 60 / 512))  # font-size="60" no SVG, mínimo 10px
         
         font2 = None
@@ -245,7 +245,7 @@ def generate_from_svg_pillow(svg_path, output_path, size):
         svg_y2_base = int(height * 380 / 512)  # Linha de base exata do SVG
         y2 = svg_y2_base - text2_ascent  # Ajusta para posicionamento correto
         
-        # Desenha "Coisas" BRANCO (sobre o círculo roxo, como no SVG)
+        # Desenha "Dia" BRANCO (sobre o círculo roxo, como no SVG)
         if font2:
             draw.text((x2, y2), text2, fill=white_color, font=font2)
         else:

@@ -1,0 +1,7 @@
+# Opcional: HTTPS local (runserver_https). Instale o projeto antes:
+#   pip install -r requirements.txt
+# Depois:
+#   pip install -r requirements-dev.txt
+django-extensions>=3.2.3,<4.0
+Werkzeug>=3.0.0,<4.0.0
+pyOpenSSL>=24.0.0,<26.0.0

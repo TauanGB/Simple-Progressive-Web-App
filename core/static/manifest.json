@@ -1,7 +1,7 @@
 {
-  "name": "3 Coisas de Hoje - Foco Diário",
-  "short_name": "3 Coisas",
-  "description": "App de apoio para organização diária com foco em poucas tarefas importantes. Ideal para pessoas com TDAH.",
+  "name": "Tarefas do Dia — PWA (Django)",
+  "short_name": "Tarefas PWA",
+  "description": "Progressive Web App com Django: lista diária de tarefas, manifest, service worker e instalação.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "/?source=pwa",
@@ -10,7 +10,7 @@
   "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "categories": ["productivity", "health"],
+  "categories": ["productivity", "education"],
   "icons": [
     {
       "src": "/static/icon-192.png",

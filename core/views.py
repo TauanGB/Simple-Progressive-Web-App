@@ -17,7 +17,6 @@ from django.conf import settings
 from django import forms
 
 from .models import DayPlan, Task
-from .ai_service import sugerir_tarefas_por_ia
 from .forms import DayPlanForm, TaskForm, RevisaoDiaForm
 from .utils import obter_ou_criar_day_plan, clonar_tarefa_para_proximo_dia, get_current_date, get_current_datetime
 
@@ -482,100 +481,6 @@ def adicionar_ao_dia_seguinte(request, task_id):
         
         messages.error(request, 'Erro ao adicionar tarefa ao dia seguinte.')
         return redirect('core:home')
-
-
-@login_required
-def sugerir_tarefas_ia(request):
-    """
-    Endpoint AJAX para sugerir tarefas usando IA.
-    
-    Recebe uma intenção vaga e retorna sugestões de tarefas.
-    """
-    if request.method == 'POST':
-        intencao_vaga = request.POST.get('intencao_vaga', '').strip()
-        
-        if not intencao_vaga:
-            return JsonResponse({
-                'success': False,
-                'error': 'Intenção vaga não fornecida'
-            }, status=400)
-        
-        try:
-            sugestoes = sugerir_tarefas_por_ia(intencao_vaga)
-            return JsonResponse({
-                'success': True,
-                'sugestoes': sugestoes
-            })
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
-    
-    return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
-
-
-@login_required
-def aplicar_sugestoes_ia(request):
-    """
-    Aplica as sugestões de IA criando tarefas no plano do dia.
-    """
-    hoje = get_current_date()
-    
-    day_plan, created = DayPlan.objects.get_or_create(
-        usuario=request.user,
-        data=hoje
-    )
-    
-    if request.method == 'POST':
-        # Recebe as sugestões selecionadas
-        sugestoes_ids = request.POST.getlist('sugestoes_selecionadas')
-        
-        if not sugestoes_ids:
-            messages.error(request, 'Nenhuma sugestão selecionada.')
-            return redirect('core:criar_tarefa_hoje')
-        
-        # Conta tarefas existentes e pendentes
-        tarefas_existentes = day_plan.tasks.count()
-        tarefas_pendentes = day_plan.tasks.filter(status='pendente').count()
-        
-        # Determina quantas tarefas podem ser criadas
-        # Se há tarefas concluídas, pode criar além das 3
-        # Caso contrário, limita a 3 tarefas pendentes
-        if day_plan.tarefas_concluidas > 0:
-            # Se há tarefas concluídas, pode criar quantas quiser (sem limite rígido)
-            limite_criacao = None
-        else:
-            # Se não há tarefas concluídas, limita a 3 tarefas pendentes
-            limite_criacao = 3
-        
-        # Cria tarefas a partir das sugestões
-        # Por simplicidade, vamos receber os dados via JSON ou form
-        # Neste MVP, vamos usar uma abordagem mais simples:
-        # receber os títulos e descrições diretamente
-        
-        titulos = request.POST.getlist('titulo')
-        descricoes = request.POST.getlist('descricao')
-        
-        for i, titulo in enumerate(titulos):
-            # Verifica se pode criar mais tarefas
-            pode_criar = True
-            if limite_criacao is not None:
-                pode_criar = (tarefas_pendentes + i) < limite_criacao
-            
-            if titulo.strip() and pode_criar:
-                Task.objects.create(
-                    day_plan=day_plan,
-                    titulo=titulo.strip(),
-                    descricao=descricoes[i].strip() if i < len(descricoes) else '',
-                    ordem=tarefas_existentes + i + 1,
-                    status='pendente'
-                )
-        
-        messages.success(request, 'Tarefas criadas a partir das sugestões!')
-        return redirect('core:home')
-    
-    return redirect('core:criar_tarefa_hoje')
 
 
 @login_required

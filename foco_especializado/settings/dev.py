@@ -16,6 +16,12 @@ if load_dotenv:
 # Em desenvolvimento, DEBUG deve estar habilitado
 DEBUG = True
 
+# Garante que DEV não force redirecionamento HTTPS por herança de base.py.
+# Em base.py, essas flags podem ter sido ativadas quando DEBUG inicial estava False.
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
 # Obtém o hostname do Codespace se estiver rodando lá
 CODESPACE_NAME = os.getenv("CODESPACE_NAME")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
@@ -68,6 +74,24 @@ if not CSRF_TRUSTED_ORIGINS:
         "https://*.app.github.dev",
         "https://potential-yodel-qg55vw9xg6jcpgj-8000.app.github.dev",
     ]
+
+# HTTPS local (runserver_https / runserver_plus): mesma porta que o HTTP padrão
+CSRF_TRUSTED_ORIGINS = list(CSRF_TRUSTED_ORIGINS)
+for _https_origin in (
+    "https://127.0.0.1:8000",
+    "https://localhost:8000",
+    "https://[::1]:8000",
+):
+    if _https_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_https_origin)
+
+# django-extensions: runserver_plus e comando runserver_https (opcional)
+try:
+    import django_extensions  # noqa: F401
+except ImportError:
+    pass
+else:
+    INSTALLED_APPS = list(INSTALLED_APPS) + ["django_extensions"]
 
 # Em desenvolvimento, permite CORS para qualquer origem nos endpoints PWA
 CORS_ALLOW_ALL_ORIGINS = True

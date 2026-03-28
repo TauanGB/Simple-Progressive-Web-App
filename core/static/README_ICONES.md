@@ -124,7 +124,7 @@ Isso copiará os arquivos para `staticfiles/` para uso em produção.
 
 ## Design recomendado
 
-Para o app "3 Coisas de Hoje", considere usar:
+Para o app "Tarefas do Dia" (PWA), considere usar:
 - Cor de fundo: #4F46E5 (primary color)
 - Cor do texto/ícone: Branco (#FFFFFF)
 - Tema: Foco, produtividade, organização

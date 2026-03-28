@@ -1,8 +1,7 @@
 """
-Modelos para o app de foco diário.
+Modelos do app de tarefas diárias (contexto simples para o PWA Django).
 
-Este app ajuda pessoas com TDAH ou dificuldade de atenção a organizar
-o dia com poucas tarefas importantes (até 3 por dia).
+Cada usuário tem um plano por dia com até três tarefas de foco.
 """
 from django.db import models
 from django.contrib.auth.models import User

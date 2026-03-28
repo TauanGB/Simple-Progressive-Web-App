@@ -87,8 +87,8 @@ def create_icon(size):
     
     # Para ícones maiores, desenha um texto mais elaborado
     if size[0] >= 256:
-        # Desenha "3 Coisas" abaixo do número
-        text2 = "Coisas"
+        # Desenha rótulo curto abaixo do número
+        text2 = "Dia"
         bbox2 = draw.textbbox((0, 0), text2, font=font)
         text2_width = bbox2[2] - bbox2[0]
         text2_height = bbox2[3] - bbox2[1]

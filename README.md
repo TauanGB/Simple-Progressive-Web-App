@@ -1,26 +1,65 @@
-# 3 Coisas de Hoje - MVP
+# Simple Progressive Web App (Django)
 
-App Django de apoio para organização diária com foco em poucas tarefas importantes, desenvolvido especialmente para pessoas com TDAH ou dificuldades de atenção.
+Projeto **básico e funcional** de **Progressive Web App (PWA)** com backend **Django**. O domínio da aplicação é uma **lista diária de tarefas** (até três por dia): suficiente para um CRUD e fluxos reais, enquanto o foco do repositório é demonstrar **manifest**, **service worker**, **instalação** e **experiência mobile/offline** coerentes com boas práticas de PWA.
+
+## O que este repositório pretende mostrar
+
+- **PWA**: `manifest.json`, `service-worker.js`, tema, ícones, atalhos e banner de instalação.
+- **Django**: autenticação, modelos de plano do dia e tarefas, templates e deploy (incl. Docker/Railway).
+- **Contexto de tarefas**: criar/editar/concluir tarefas, histórico e revisão do dia — cenário simples para exercitar o app como “app instalável”, não um produto terapêutico ou de saúde.
 
 ## ⚙️ Deploy & ENV (DEV/PROD/Railway)
 
 ### Variáveis (.env)
+
 Use `env.example` na raiz como base.
 
 ### DEV (SQLite automático)
+
+Na raiz do repositório (onde está `manage.py`):
+
 ```bash
-cd foco_especializado
 export DJANGO_SETTINGS_MODULE=foco_especializado.settings.dev
 python manage.py runserver
 ```
 
+No Windows (PowerShell): `$env:DJANGO_SETTINGS_MODULE="foco_especializado.settings.dev"` antes de `runserver`.
+
+### HTTPS no desenvolvimento (evita erro “only supports HTTP”)
+
+O `runserver` padrão **só fala HTTP**. Se você abrir `https://127.0.0.1:8000`, o navegador manda TLS e o servidor responde com erro (`Bad request version` / “only supports HTTP”).
+
+**Opção A — sem HTTPS:** use sempre **`http://127.0.0.1:8000`** ou **`http://localhost:8000`**. Para PWA, `localhost` já é [contexto seguro](https://developer.mozilla.org/docs/Web/Security/Secure_Contexts) no navegador.
+
+**Opção B — HTTPS local:** instale dependências de dev e use o comando que sobe o Werkzeug com certificado autoassinado em `./ssl/`:
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+export DJANGO_SETTINGS_MODULE=foco_especializado.settings.dev
+python manage.py runserver_https
+```
+
+PowerShell:
+
+```powershell
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+$env:DJANGO_SETTINGS_MODULE="foco_especializado.settings.dev"
+python manage.py runserver_https
+```
+
+Abra **`https://localhost:8000`** (o cert é para `localhost`; em `127.0.0.1` o aviso de certificado pode ser pior). Na primeira execução os arquivos `ssl/dev.crt` e `ssl/dev.key` são criados.
+
 ### PROD local (Docker)
+
 ```bash
 docker build -t sistemaeg3 .
 docker run -p 8000:8000 --env-file ./env.example sistemaeg3
 ```
 
 ### Railway
+
 - Deploy por repo (Dockerfile detectado)
 - Defina ENV obrigatórias:
   - `DJANGO_SETTINGS_MODULE=foco_especializado.settings.prod`
@@ -28,202 +67,61 @@ docker run -p 8000:8000 --env-file ./env.example sistemaeg3
   - MySQL: `MYSQL_HOST`, `MYSQL_PORT=3306`, `MYSQL_DB`, `MYSQL_USER`, `MYSQL_PASSWORD`, `USE_PYMYSQL=1`
 - Health path: `/healthz`
 
-## 📋 Sobre o Projeto
-
-Este é um MVP (Minimum Viable Product) de um aplicativo web focado em ajudar pessoas a organizar o dia com poucas tarefas importantes (até 3 por dia). O app trabalha com princípios de externalização de funções executivas, transformando intenções vagas em ações claras e acionáveis.
-
-**⚠️ IMPORTANTE:** Este app é uma ferramenta de apoio e NÃO substitui avaliação profissional, diagnóstico ou tratamento médico/psicológico.
-
-## 🚀 Como Rodar o Projeto Localmente
+## 🚀 Como rodar localmente
 
 ### Pré-requisitos
 
 - Python 3.8 ou superior
-- pip (gerenciador de pacotes Python)
+- pip
 
-### Passo a Passo
+### Passos
 
-1. **Navegue até o diretório do projeto:**
-   ```bash
-   cd foco_especializado
-   ```
+1. Na raiz do repositório (onde está `manage.py`), crie e ative um ambiente virtual.
+2. `pip install -r requirements.txt`
+3. `python manage.py migrate`
+4. Opcional: `python manage.py createsuperuser`
+5. `python manage.py runserver`
+6. Abra http://127.0.0.1:8000/ — o admin fica em `/admin/`.
 
-2. **Crie um ambiente virtual (recomendado):**
-   ```bash
-   python -m venv venv
-   ```
+Para desenvolvimento com settings explícitos, use `DJANGO_SETTINGS_MODULE=foco_especializado.settings.dev` como acima.
 
-3. **Ative o ambiente virtual:**
-   
-   **Windows (PowerShell):**
-   ```powershell
-   .\venv\Scripts\Activate.ps1
-   ```
-   
-   **Windows (CMD):**
-   ```cmd
-   venv\Scripts\activate.bat
-   ```
-   
-   **Linux/Mac:**
-   ```bash
-   source venv/bin/activate
-   ```
-
-4. **Instale as dependências:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. **Execute as migrações do banco de dados:**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-6. **Crie um superusuário (opcional, para acessar o admin):**
-   ```bash
-   python manage.py createsuperuser
-   ```
-   Siga as instruções para criar um usuário administrador.
-
-7. **Inicie o servidor de desenvolvimento:**
-   ```bash
-   python manage.py runserver
-   ```
-
-8. **Acesse o app no navegador:**
-   - App principal: http://127.0.0.1:8000/
-   - Admin Django: http://127.0.0.1:8000/admin/
-
-## 📁 Estrutura do Projeto
+## 📁 Estrutura (resumo)
 
 ```
-foco_especializado/
-├── core/                          # App principal
-│   ├── models.py                  # Modelos DayPlan e Task
-│   ├── views.py                   # Views do app
-│   ├── urls.py                    # URLs do app
-│   ├── forms.py                   # Formulários
-│   ├── ai_service.py              # Stub de serviço de IA
-│   ├── admin.py                   # Configuração do admin
-│   ├── templates/core/            # Templates HTML
-│   │   ├── base.html              # Template base
-│   │   ├── home.html              # Página principal (hoje)
-│   │   ├── criar_plano_dia.html   # Criação de tarefas
-│   │   ├── historico.html         # Histórico de dias
-│   │   ├── revisao_dia.html       # Revisão do dia
-│   │   ├── sobre.html             # Página sobre
-│   │   └── ...
-│   └── static/                     # Arquivos estáticos
-│       ├── manifest.json           # Manifest PWA
-│       └── service-worker.js       # Service Worker PWA
-├── foco_especializado/            # Configurações do projeto
-│   ├── settings.py                 # Configurações Django
-│   ├── urls.py                     # URLs principais
-│   └── ...
-├── manage.py                       # Script de gerenciamento Django
-├── requirements.txt                # Dependências Python
-└── README.md                       # Este arquivo
+foco_especializado/     # Projeto Django (URLs, settings)
+core/                   # App: tarefas, templates, PWA estático
+  static/
+    manifest.json
+    service-worker.js
+manage.py
+requirements.txt
 ```
 
-## 🎯 Funcionalidades do MVP
+## Funcionalidades (app de tarefas)
 
-### 1. Página do Dia de Hoje
-- Mostra a data atual
-- Lista até 3 tarefas importantes do dia
-- Permite criar, editar, marcar como concluída e deletar tarefas
-- Mostra resumo de progresso e streak (dias consecutivos)
+- **Hoje**: até três tarefas por dia, progresso e consistência (streak).
+- **Criação guiada** de tarefas.
+- **Histórico** e **detalhes** de dias anteriores.
+- **Revisão do dia** (reflexão / motivos de não conclusão).
+- **PWA**: instalar na tela inicial, assets em cache, página offline.
 
-### 2. Criação Guiada de Tarefas
-- Fluxo passo a passo para criar tarefas
-- Sugestão de tarefas usando IA (stub implementado)
-- Campo para "intenção vaga" que é quebrada em tarefas específicas
+## Arquivos PWA principais
 
-### 3. Histórico
-- Lista de dias anteriores com progresso
-- Visualização de detalhes de cada dia (somente leitura)
+| Arquivo | Papel |
+|--------|--------|
+| `core/static/manifest.json` | Nome, ícones, `display`, atalhos |
+| `core/static/service-worker.js` | Cache e fallback offline |
+| `core/templates/core/base.html` | Manifest, meta tags, banner de instalação |
+| `core/static/js/pwa-install.js` | Fluxo de instalação |
 
-### 4. Revisão do Dia
-- Permite registrar motivo de não conclusão
-- Campo para reflexão/comentário sobre o dia
+## Notas
 
-### 5. Página Sobre
-- Explicação do app e seus princípios
-- Avisos importantes sobre não ser diagnóstico/tratamento
+- **Produção**: `DEBUG=False`, `SECRET_KEY` forte, HTTPS, `ALLOWED_HOSTS` e banco adequado (PostgreSQL/MySQL).
 
-## 🔧 Arquivos Principais e Suas Funções
+## Licença
 
-### Models (`core/models.py`)
-- **DayPlan**: Representa um plano do dia com tarefas e informações de revisão
-- **Task**: Representa uma tarefa individual (até 3 por dia)
-
-### Views (`core/views.py`)
-- `home`: Página principal com o plano do dia de hoje
-- `criar_plano_dia`: Fluxo de criação de tarefas
-- `editar_tarefa`, `marcar_tarefa`, `deletar_tarefa`: Gerenciamento de tarefas
-- `historico`, `detalhes_dia`: Visualização de histórico
-- `revisao_dia`: Revisão e reflexão do dia
-- `sugerir_tarefas_ia`: Endpoint AJAX para sugestões de IA
-- `sobre`: Página informativa
-- `registrar_usuario`: Registro de novos usuários
-
-### AI Service (`core/ai_service.py`)
-- **Stub de IA**: Função `sugerir_tarefas_por_ia()` que retorna sugestões baseadas em palavras-chave
-- **Futuro**: Substituir por chamada real a API de modelo de linguagem (OpenAI, Anthropic, etc.)
-
-### PWA
-- **manifest.json**: Configuração do Progressive Web App
-- **service-worker.js**: Service Worker básico (esqueleto para futuras melhorias)
-
-## 🔮 Melhorias Futuras
-
-### Curto Prazo
-- Substituir stub de IA por integração real com API
-- Adicionar ícones reais para o PWA
-- Melhorar cache offline do service worker
-
-### Médio Prazo
-- Relatórios e análises de padrões
-- Notificações e lembretes
-- Personalização avançada
-- Exportação de dados
-
-### Longo Prazo
-- App mobile nativo
-- Sincronização entre dispositivos
-- Colaboração/compartilhamento
-- Integração com calendários
-
-## ⚠️ Notas Importantes
-
-1. **Autenticação**: O app usa o sistema de usuários padrão do Django. Cada usuário tem seus próprios planos e tarefas.
-
-2. **Banco de Dados**: Por padrão, usa SQLite (desenvolvimento). Para produção, configure PostgreSQL ou MySQL.
-
-3. **PWA**: Os arquivos PWA estão implementados como esqueleto. Para funcionalidade completa offline, será necessário expandir o service worker.
-
-4. **IA**: A funcionalidade de sugestão de tarefas usa um stub local. Para usar IA real:
-   - Adicione variável de ambiente para API key
-   - Instale biblioteca apropriada (ex.: `openai`, `anthropic`)
-   - Substitua a função em `ai_service.py`
-
-5. **Segurança**: Este é um MVP para testes locais. Para produção:
-   - Configure `SECRET_KEY` adequadamente
-   - Desative `DEBUG`
-   - Configure `ALLOWED_HOSTS`
-   - Use HTTPS
-   - Implemente validações e sanitizações adicionais
-
-## 📝 Licença
-
-Este projeto é um MVP para fins educacionais e de teste.
-
-## 🤝 Contribuindo
-
-Este é um projeto MVP. Sugestões e melhorias são bem-vindas!
+Projeto educativo / demonstrativo; use e adapte conforme a licença do repositório.
 
 ---
 
-**Desenvolvido com Django 5.2.8**
-
+**Stack:** Django 5.x · PWA (Web App Manifest + Service Worker)
